@@ -1,0 +1,188 @@
+<Scene>
+	<Camera>
+		<Transform>
+			<Position x="1.000000" y="2.000000" z="-12.700018"/>
+		</Transform>
+	</Camera>
+	<Models>
+		<Model>Rock2.ply</Model>
+		<Model>beach chair extra.ply</Model>
+		<Model>beach chair extra blue.ply</Model>
+		<Model>Floor.ply</Model>
+		<Model>Skybox.ply</Model>
+		<Model>Beachball.ply</Model>
+		<Model>ball.ply</Model>
+		<Model>ISO.ply</Model>
+		<Model>testing.ply</Model>
+	</Models>
+	<Description>
+		<Mesh FriendlyName="Sky" MeshName="Skybox.ply">
+			<Transform>
+				<Position x="0.000000" y="0.000000" z="0.550000"/>
+				<Rotation x="0.000000" y="0.000000" z="0.000000"/>
+				<Scale>200.000000</Scale>
+			</Transform>
+			<Colors>
+				<OverrideColor>true</OverrideColor>
+				<Color r="0.750000" g="0.860000" b="1.000000" a="1.000000"/>
+			</Colors>
+			<Misc>
+				<UseLighting>false</UseLighting>
+			</Misc>
+		</Mesh>
+		<Mesh FriendlyName="Water" MeshName="Floor.ply">
+			<Transform>
+				<Position x="0.150000" y="-2.300000" z="0.100000"/>
+				<Rotation x="90.000000" y="0.000000" z="0.000000"/>
+				<Scale>20.000000</Scale>
+			</Transform>
+			<Colors>
+				<OverrideColor>true</OverrideColor>
+				<Color r="0.150000" g="0.300000" b="1.000000" a="1.000000"/>
+			</Colors>
+			<Misc>
+				<UseLighting>true</UseLighting>
+			</Misc>
+		</Mesh>
+		<Mesh FriendlyName="Floor" MeshName="Floor.ply">
+			<Transform>
+				<Position x="0.150000" y="-0.850000" z="0.000000"/>
+				<Rotation x="90.000000" y="0.000000" z="0.000000"/>
+				<Scale>1.500000</Scale>
+			</Transform>
+			<Colors>
+				<OverrideColor>true</OverrideColor>
+				<Color r="1.000000" g="0.880000" b="0.710000" a="1.000000"/>
+			</Colors>
+			<Misc>
+				<UseLighting>true</UseLighting>
+			</Misc>
+		</Mesh>
+		<Mesh FriendlyName="Rock3" MeshName="Rock2.ply">
+			<Transform>
+				<Position x="0.450000" y="-0.010000" z="6.650002"/>
+				<Rotation x="0.000000" y="0.000000" z="15.000001"/>
+				<Scale>0.005000</Scale>
+			</Transform>
+			<Colors>
+				<OverrideColor>true</OverrideColor>
+				<Color r="0.480000" g="0.450000" b="0.570000" a="1.000000"/>
+			</Colors>
+			<Misc>
+				<UseLighting>true</UseLighting>
+			</Misc>
+		</Mesh>
+		<Mesh FriendlyName="Rock2" MeshName="Rock2.ply">
+			<Transform>
+				<Position x="2.100000" y="-0.400000" z="4.800000"/>
+				<Rotation x="28.000000" y="-148.000000" z="-24.000000"/>
+				<Scale>0.002882</Scale>
+			</Transform>
+			<Colors>
+				<OverrideColor>true</OverrideColor>
+				<Color r="0.570000" g="0.490000" b="0.460000" a="1.000000"/>
+			</Colors>
+			<Misc>
+				<UseLighting>true</UseLighting>
+			</Misc>
+		</Mesh>
+		<Mesh FriendlyName="Rock1" MeshName="Rock2.ply">
+			<Transform>
+				<Position x="-4.650000" y="-0.700000" z="-4.150000"/>
+				<Rotation x="0.000000" y="0.000000" z="170.000000"/>
+				<Scale>0.001000</Scale>
+			</Transform>
+			<Colors>
+				<OverrideColor>true</OverrideColor>
+				<Color r="0.670000" g="0.670000" b="0.670000" a="1.000000"/>
+			</Colors>
+			<Misc>
+				<UseLighting>true</UseLighting>
+			</Misc>
+		</Mesh>
+		<Mesh FriendlyName="Rock4" MeshName="Rock2.ply">
+			<Transform>
+				<Position x="5.850000" y="-0.600000" z="3.150000"/>
+				<Rotation x="0.000000" y="0.000000" z="20.000000"/>
+				<Scale>0.001817</Scale>
+			</Transform>
+			<Colors>
+				<OverrideColor>true</OverrideColor>
+				<Color r="0.350000" g="0.330000" b="0.380000" a="1.000000"/>
+			</Colors>
+			<Misc>
+				<UseLighting>true</UseLighting>
+			</Misc>
+		</Mesh>
+		<Mesh FriendlyName="Chair" MeshName="beach chair extra blue.ply">
+			<Transform>
+				<Position x="-0.100000" y="-0.700000" z="0.000000"/>
+				<Rotation x="0.000000" y="75.000000" z="0.000000"/>
+				<Scale>0.010000</Scale>
+			</Transform>
+			<Misc>
+				<UseLighting>true</UseLighting>
+			</Misc>
+		</Mesh>
+		<Mesh FriendlyName="Chair" MeshName="beach chair extra.ply">
+			<Transform>
+				<Position x="-0.200000" y="-0.700000" z="0.700000"/>
+				<Rotation x="7.000000" y="90.000000" z="4.000000"/>
+				<Scale>0.010397</Scale>
+			</Transform>
+			<Misc>
+				<UseLighting>true</UseLighting>
+			</Misc>
+		</Mesh>
+		<Mesh FriendlyName="Beachball" MeshName="Beachball.ply">
+			<Transform>
+				<Position x="2.600000" y="-0.500000" z="0.000000"/>
+				<Rotation x="76.000000" y="0.000000" z="80.000000"/>
+				<Scale>0.002950</Scale>
+			</Transform>
+			<Misc>
+				<UseLighting>true</UseLighting>
+			</Misc>
+		</Mesh>
+		<Mesh FriendlyName="testing!" MeshName="Beachball.ply">
+			<Transform>
+				<Position x="-2.099999" y="-0.700000" z="-0.200000"/>
+				<Rotation x="0.000000" y="0.000000" z="-41.000011"/>
+				<Scale>0.000850</Scale>
+			</Transform>
+			<Misc>
+				<UseLighting>true</UseLighting>
+			</Misc>
+		</Mesh>
+		<Mesh FriendlyName="minecraft" MeshName="testing.ply">
+			<Transform>
+				<Position x="0" y="-5" z="0"/>
+				<Rotation x="0.000000" y="0.000000" z="0.000000"/>
+				<Scale>1.000000</Scale>
+			</Transform>
+			<Misc>
+				<UseLighting>true</UseLighting>
+				<Textures>
+					<Texture Ratio ="1.0">testing-RGB.bmp</Texture>
+				</Textures>
+        <AlphaMask>testing-Alpha.bmp</AlphaMask>
+			</Misc>
+		</Mesh>
+    <Mesh FriendlyName="ISO" MeshName="ISO.ply">
+      <Transform>
+        <Position x="0" y="0" z="0"/>
+        <Rotation x="0.000000" y="0.000000" z="0.000000"/>
+        <Scale>1.000000</Scale>
+      </Transform>
+      <Misc>
+        <UseLighting>true</UseLighting>
+        <UseSpecular/>
+        <Textures>
+          <Texture Ratio ="0.5">kan.bmp</Texture>
+          <Texture Ratio ="0.5">stone.bmp</Texture>
+        </Textures>
+      </Misc>
+    </Mesh>
+	</Description>
+</Scene>
+

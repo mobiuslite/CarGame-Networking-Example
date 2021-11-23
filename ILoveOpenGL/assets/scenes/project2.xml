@@ -1,0 +1,47 @@
+<Scene>
+	<Camera>
+		<Transform>
+			<Position x="0.00000" y="35.00000" z="20.000"/>
+		</Transform>
+	</Camera>
+	<Models>
+		<Model>Skybox.ply</Model>
+		<Model>Beachball.ply</Model>
+		<Model>track.ply</Model>
+		<Model>ISO.ply</Model>
+		<Model>car.ply</Model>
+	</Models>
+	<Description>
+		<Mesh FriendlyName="Sky" MeshName="Skybox.ply">
+			<Transform>
+				<Position x="0.000000" y="0.000000" z="0.550000"/>
+				<Rotation x="0.000000" y="0.000000" z="0.000000"/>
+				<Scale>200.000000</Scale>
+			</Transform>
+			<Colors>
+				<OverrideColor>true</OverrideColor>
+				<Color r="0.750000" g="0.860000" b="1.000000" a="1.000000"/>
+			</Colors>
+			<Misc>
+				<UseLighting>false</UseLighting>
+			</Misc>
+		</Mesh>
+		<Mesh FriendlyName="track!" MeshName="track.ply">
+			<Transform>
+				<Position x="0.0" y="-0.75" z="0.00000"/>
+				<Rotation x="0.000000" y="0.000000" z="0.0"/>
+				<Scale>80.0</Scale>
+			</Transform>
+			<Misc>
+				<UseLighting>true</UseLighting>
+				<Textures>
+					<Texture Ratio="1.000000">track.bmp</Texture>
+					<Texture Ratio="0.000000"/>
+					<Texture Ratio="0.000000"/>
+					<Texture Ratio="0.000000"/>
+				</Textures>
+			</Misc>
+		</Mesh>
+	</Description>
+</Scene>
+
