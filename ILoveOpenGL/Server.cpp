@@ -40,6 +40,7 @@ cServer::cServer(std::string ip, short port)
     sockaddr_in RecvAddr;
     RecvAddr.sin_family = AF_INET;
     RecvAddr.sin_port = htons(0);
+    //RecvAddr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
     RecvAddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     iResult = bind(this->recvSocket, (SOCKADDR*)&RecvAddr, sizeof(RecvAddr));
@@ -148,74 +149,96 @@ bool cServer::SendCarState(std::string username, glm::vec3 pos, glm::vec3 velo, 
 
 void cServer::CheckReceive(std::vector<cMesh*>* vecMeshes)
 {
+    FD_SET ReadSet;
+    timeval tv = { 0 };
+    tv.tv_sec = 0;
+    // Initialize our read set
+    FD_ZERO(&ReadSet);
 
-    const int bufSize = 128;
-    char RecvBuf[bufSize];
+    // Always look for send packets
+    FD_SET(this->recvSocket, &ReadSet);
 
-    int result = recvfrom(this->recvSocket,
-        RecvBuf, bufSize, 0, NULL, NULL);
-    if (result == SOCKET_ERROR)
+    // Call our select function to find the sockets that
+    // require our attention
+    //printf("Attempting receive...\n");
+    int total = select(0, &ReadSet, NULL, NULL, &tv);
+    if (total == SOCKET_ERROR)
     {
-        int lastError = WSAGetLastError();
+        printf("select() failed with error: %d\n", WSAGetLastError());
 
-        if (lastError != WSAEWOULDBLOCK)
-        {
-            wprintf(L"recvfrom failed with error %d\n", lastError);
-        }
+        return;
     }
 
-    //Received successfully!
-    if (result > 0)
+    if (total > 0)
     {
-        std::string recvString;
-        for (size_t i = 0; i < bufSize; i++)
+
+        const int bufSize = 128;
+        char RecvBuf[bufSize];
+
+        int result = recvfrom(this->recvSocket,
+            RecvBuf, bufSize, 0, NULL, NULL);
+        if (result == SOCKET_ERROR)
         {
-            recvString.push_back(RecvBuf[i]);
-        }
+            int lastError = WSAGetLastError();
 
-        buffer.ClearBuffer();
-        buffer.SetBufferMessage(recvString);
-
-        short stringLength = buffer.ReadShort();
-        std::string message = buffer.ReadString(stringLength);
-
-        bufferProtos::CarState carState;
-        bool success = carState.ParseFromString(message);
-
-        if (success)
-        {
-            std::string netCarName = carState.username();
-
-            if (this->networkCars.count(netCarName))
+            if (lastError != WSAEWOULDBLOCK)
             {
-                //Car exists
-                //Update old car
-                cNetworkCar* updateCar = this->networkCars[netCarName];
-
-                glm::vec2 pos = glm::vec2(carState.position().x(), carState.position().z());
-                glm::vec2 velo = glm::vec2(carState.velocity().x(), carState.velocity().z());
-                updateCar->SetNetworkCar(pos, velo, carState.yradiansrotation());
-
-            }
-            else
-            {
-                //Car doesn't exist
-                //Make new Mesh
-                cMesh* carMesh = new cMesh();
-                carMesh->meshName = "car.ply";
-                carMesh->friendlyName = "NetworkedCar";
-
-                cNetworkCar* newCar = new cNetworkCar(carMesh);
-                glm::vec2 pos = glm::vec2(carState.position().x(), carState.position().z());
-                glm::vec2 velo = glm::vec2(carState.velocity().x(), carState.velocity().z());
-                newCar->SetNetworkCar(pos, velo, carState.yradiansrotation());
-
-                //Adds mesh and car to game
-                vecMeshes->push_back(carMesh);
-                this->networkCars.insert(std::pair<std::string, cNetworkCar*>(netCarName, newCar));
+                wprintf(L"recvfrom failed with error %d\n", lastError);
             }
         }
 
+        //Received successfully!
+        if (result > 0)
+        {
+            std::string recvString;
+            for (size_t i = 0; i < bufSize; i++)
+            {
+                recvString.push_back(RecvBuf[i]);
+            }
+
+            buffer.ClearBuffer();
+            buffer.SetBufferMessage(recvString);
+
+            short stringLength = buffer.ReadShort();
+            std::string message = buffer.ReadString(stringLength);
+
+            bufferProtos::CarState carState;
+            bool success = carState.ParseFromString(message);
+
+            if (success)
+            {
+                std::string netCarName = carState.username();
+
+                if (this->networkCars.count(netCarName))
+                {
+                    //Car exists
+                    //Update old car
+                    cNetworkCar* updateCar = this->networkCars[netCarName];
+
+                    glm::vec2 pos = glm::vec2(carState.position().x(), carState.position().z());
+                    glm::vec2 velo = glm::vec2(carState.velocity().x(), carState.velocity().z());
+                    updateCar->SetNetworkCar(pos, velo, carState.yradiansrotation());
+
+                }
+                else
+                {
+                    //Car doesn't exist
+                    //Make new Mesh
+                    cMesh* carMesh = new cMesh();
+                    carMesh->meshName = "car.ply";
+                    carMesh->friendlyName = "NetworkedCar";
+
+                    cNetworkCar* newCar = new cNetworkCar(carMesh);
+                    glm::vec2 pos = glm::vec2(carState.position().x(), carState.position().z());
+                    glm::vec2 velo = glm::vec2(carState.velocity().x(), carState.velocity().z());
+                    newCar->SetNetworkCar(pos, velo, carState.yradiansrotation());
+
+                    //Adds mesh and car to game
+                    vecMeshes->push_back(carMesh);
+                    this->networkCars.insert(std::pair<std::string, cNetworkCar*>(netCarName, newCar));
+                }
+            }
+
+        }
     }
-    
 }

@@ -34,7 +34,7 @@ int main()
     WSADATA wsaData;
 
     SOCKET listenSocket = INVALID_SOCKET;
-    SOCKET sendSocket = INVALID_SOCKET;
+    //SOCKET sendSocket = INVALID_SOCKET;
 
     struct sockaddr_in RecvAddr;
 
@@ -61,13 +61,13 @@ int main()
         return 1;
     }
 
-    sendSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    /*sendSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (sendSocket == INVALID_SOCKET)
     {
         wprintf(L"socket failed with error: %ld\n", WSAGetLastError());
         WSACleanup();
         return 1;
-    }
+    }*/
     //-----------------------------------------------
     // Bind the socket to any address and the specified port.
     RecvAddr.sin_family = AF_INET;
@@ -109,15 +109,41 @@ int main()
     previous_update_time = current_time;
 
     //60hz (roughly)
-    std::chrono::milliseconds tickTime = std::chrono::milliseconds(16);
+    std::chrono::milliseconds tickTime = std::chrono::milliseconds(41);
 
     while (true)
     {
         if (_kbhit())
         {
-            if (_getch() == 27)
+            char charHit = _getch();
+            if (charHit == 27)
             {
                 break;
+            }
+            else if (charHit == '1')
+            {
+                tickTime = std::chrono::milliseconds(1000);
+                printf("Set server to 1hz\n");
+            }
+            else if (charHit == '2')
+            {
+                tickTime = std::chrono::milliseconds(100);
+                printf("Set server to 10hz\n");
+            }
+            else if (charHit == '3')
+            {
+                tickTime = std::chrono::milliseconds(10);
+                printf("Set server to 100hz\n");
+            }
+            else if (charHit == '4')
+            {
+                tickTime = std::chrono::milliseconds(16);
+                printf("Set server to 60hz\n");
+            }
+            else if (charHit == '5')
+            {
+                tickTime = std::chrono::milliseconds(41);
+                printf("Set server to 24hz\n");
             }
         }
 
@@ -153,7 +179,7 @@ int main()
                         int BufLen = (int)bufferMsg.size();
 
                         //wprintf(L"Sending a datagram to the receiver...\n");
-                        int result = sendto(sendSocket,
+                        int result = sendto(listenSocket,
                             bufferMsg.c_str(), BufLen, 0, (SOCKADDR*)&clientAddress, sizeof(clientAddress));
                         if (result == SOCKET_ERROR)
                         {
@@ -224,6 +250,9 @@ int main()
                 if (foundClientIt == ClientArray.end())
                 {
                     //Creates new client
+
+                    printf("Added new client!\n");
+
                     ClientInfo* newClient = new ClientInfo();
                     newClient->ip = senderIp;
                     newClient->port = SenderAddr.sin_port;
@@ -275,12 +304,12 @@ int main()
         return 1;
     }
 
-    iResult = closesocket(sendSocket);
+    /*iResult = closesocket(sendSocket);
     if (iResult == SOCKET_ERROR)
     {
         wprintf(L"closesocket failed with error %d\n", WSAGetLastError());
         return 1;
-    }
+    }*/
 
     //-----------------------------------------------
     // Clean up and exit.
