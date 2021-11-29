@@ -37,6 +37,7 @@
 #include <algorithm>
 #include "cCar.h"
 #include "cCollisionWorld.h"
+#include "Server.h"
 
 enum class Transform
 {
@@ -46,6 +47,10 @@ enum class Transform
 };
 
 GLuint program;
+
+cServer server = cServer("127.0.0.1", 27015);
+
+std::string username;
 
 // Global things are here:
 
@@ -124,223 +129,6 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         {
             std::cout << "Saved scene: " << sceneName << std::endl;
         }*/
-    }
-    else if (key == GLFW_KEY_INSERT && action == GLFW_PRESS)
-    {
-
-        //ADDING NEW OR EXISTING MODELS.
-        std::string type;
-        std::string param;
-
-        std::cout << "What would you like do to? (add/del): ";
-
-        std::cin >> type;
-        std::cout << std::endl;
-
-        if (type == "add")
-        {
-            std::cout << "Add mesh from existing model? (y/n): ";
-            std::cin >> type;
-
-            //Add a new mesh from a model already loaded into the VAO
-            if (type == "y")
-            {
-                std::cout << std::endl;
-                std::cout << "Add a friendly name for the object: ";
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-                std::string name;
-                std::getline(std::cin, name);
-
-                std::cout << std::endl;
-                std::cout << "Select a model to create a mesh from (1-" << (*sceneLoader->GetModels()).size() << "): " << std::endl;
-
-                //Prints out all models being used.
-                int i = 1;
-                for (sModel model : *sceneLoader->GetModels())
-                {
-                    std::cout << "\t" << i << "." << model.fileName << std::endl;
-
-                    i++;
-                }
-
-                std::cout << std::endl;
-
-                std::string selectionString;
-                std::cin >> selectionString;
-                int selection = -1;
-
-                //Attempts to get the user's response
-                try
-                {
-
-                    selection = std::stoi(selectionString) - 1;
-                }
-                catch (const std::exception& e)
-                {
-                    std::cout << "Please use numbers to select a model" << std::endl;
-                    std::cout << e.what() << std::endl;
-                }
-
-
-                //Creates a new mesh and adds it to the list of meshes if the response of good!
-                cMesh* newMesh = new cMesh();
-                try
-                {
-                    sModel selectedModel = (*sceneLoader->GetModels()).at(selection);
-
-                    newMesh->meshName = selectedModel.fileName;
-                    newMesh->scale = selectedModel.defaultScale;
-                    newMesh->friendlyName = name;
-                }
-                catch (const std::exception& e)
-                {
-                    std::cout << "Selection out of bound" << std::endl;
-                    std::cout << e.what() << std::endl;
-                }
-
-                //Adds the new mesh to the list of meshes to render
-                if (newMesh->meshName != "")
-                {
-                    g_vecMeshes->push_back(newMesh);
-
-                    g_selectedObject = (int)g_vecMeshes->size() - 1;
-
-                    std::cout << "Added new mesh from model: " << newMesh->meshName << std::endl;
-                }
-
-            }
-            //If you want to import a new model
-            else if (type == "n")
-            {
-
-                std::cout << std::endl;
-                std::cout << "Enter the name of the file (e.g. bunny.ply | make sure it's in the \"assets\\models\" folder): ";
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-                std::string fileName;
-                std::getline(std::cin, fileName);
-
-                sModel newModel;
-                sModelDrawInfo modelDrawInfo;
-
-                //Attempts to load the model into the vao
-                if (gVAOManager.LoadModelIntoVAO(fileName, modelDrawInfo, program))
-                {
-                    std::cout << "Loaded " << fileName << " into the VAO!" << std::endl;
-
-                    newModel.fileName = fileName;
-                    newModel.defaultScale = modelDrawInfo.defaultScale;
-
-                    (*sceneLoader->GetModels()).push_back(newModel);
-
-                    std::cout << std::endl;
-                    std::cout << "Add a friendly name for the object: ";
-
-                    std::string name;
-                    std::getline(std::cin, name);
-
-
-                    //Adds the new mesh to the screen.
-                    cMesh* newMesh = new cMesh();
-
-                    newMesh->meshName = newModel.fileName;
-                    newMesh->scale = newModel.defaultScale;
-                    newMesh->friendlyName = name;
-
-                    g_vecMeshes->push_back(newMesh);
-
-                    g_selectedObject = (int)g_vecMeshes->size() - 1;
-
-                    std::cout << "Added new mesh from model: " << newMesh->meshName << std::endl;
-                }
-                else
-                {
-                    std::cout << "ERROR: Could not load " << fileName << " into the VAO" << std::endl;
-                }
-
-            }
-        }
-
-        //Deleting a mesh from the scene
-        else if (type == "del")
-        {
-            std::cout << std::endl;
-            std::cout << "Select a mesh to delete (1-" << (*sceneLoader->GetLoadedSceneMeshes()).size() << "): " << std::endl;
-
-            //Prints out all models being used.
-            int i = 1;
-            for (cMesh* model : *sceneLoader->GetLoadedSceneMeshes())
-            {
-                std::cout << "\t" << i << "." << model->friendlyName << std::endl;
-
-                i++;
-            }
-
-            std::cout << std::endl;
-
-            std::string selectionString;
-            std::cin >> selectionString;
-            int selection = -1;
-
-            //Attempts to get the user's response
-            try
-            {
-
-                selection = std::stoi(selectionString) - 1;
-            }
-            catch (const std::exception& e)
-            {
-                std::cout << "Please use numbers to select a mesh" << std::endl;
-                std::cout << e.what() << std::endl;
-            }
-
-            try
-            {
-                cMesh* selectedSceneMesh = (*sceneLoader->GetLoadedSceneMeshes()).at(selection);
-
-                (*sceneLoader->GetLoadedSceneMeshes()).erase((*sceneLoader->GetLoadedSceneMeshes()).begin() + selection);
-
-                std::cout << "Deleted mesh " << selectedSceneMesh->friendlyName << std::endl;
-
-                //If the model that the mesh was based off of doesn't exist in the scene at all
-                //Remove it from the list of models.
-                bool foundModel = false;
-                for (cMesh* model : *sceneLoader->GetLoadedSceneMeshes())
-                {
-                    if (model->meshName == selectedSceneMesh->meshName)
-                    {
-                        foundModel = true;
-                        break;
-                    }
-                }
-
-                //If a model that isn't being used was found, delete it.
-                if (!foundModel)
-                {
-                    for (int i = 0; i < (*sceneLoader->GetModels()).size(); i++)
-                    {
-                        if ((*sceneLoader->GetModels())[i].fileName == selectedSceneMesh->meshName)
-                        {
-                            (*sceneLoader->GetModels()).erase((*sceneLoader->GetModels()).begin() + i);
-                            break;
-                        }
-                    }
-                }
-
-                g_selectedObject = (int)g_vecMeshes->size() - 1;
-            }
-            catch (const std::exception& e)
-            {
-                std::cout << "Selection out of bound" << std::endl;
-                std::cout << e.what() << std::endl;
-            }
-
-        }
-        else
-        {
-            std::cout << "That is not a valid option" << std::endl << std::endl;
-        }
     }
 
     bool bShiftDown = false;
@@ -641,6 +429,11 @@ void ProcessAsyncKeyboard(GLFWwindow* window, float deltaTime)
 
 int main(void)
 {
+    std::cout << "Enter a username!: ";
+    std::getline(std::cin, username);
+
+    std::cout << std::endl;
+
     GLFWwindow* window;
 
     g_FlyCamera = new cFlyCamera();
@@ -1005,9 +798,17 @@ int main(void)
         ProcessAsyncMouse(window, (float)deltaTime);
         ProcessAsyncKeyboard(window, (float)deltaTime);
 
+        //Integrate cars
         playerCar->Integrate(deltaTime);
+        for (std::map<std::string, cNetworkCar*>::iterator carMapIt = server.networkCars.begin(); carMapIt != server.networkCars.end(); carMapIt++)
+        {
+            (*carMapIt).second->Integrate((float)deltaTime);
+        }
 
         g_FlyCamera->Update(deltaTime);
+
+        server.SendCarState(username, playerCar->Transform().position, playerCar->Velocity(), playerCar->Transform().rotation.y);
+        server.CheckReceive(g_vecMeshes);
     }
 
     delete g_FlyCamera;

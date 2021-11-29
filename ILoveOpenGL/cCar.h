@@ -26,6 +26,8 @@ public:
 
 	cCollider* collider;
 
+	glm::vec3 Velocity();
+
 private:
 	glm::vec3 m_velocity;
 	glm::vec3 m_acceleration;

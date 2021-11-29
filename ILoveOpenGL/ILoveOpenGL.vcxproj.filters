@@ -52,6 +52,12 @@
     <Filter Include="Collision">
       <UniqueIdentifier>{7f961bc5-2a94-4393-a3fc-3c0688d5669e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Networking">
+      <UniqueIdentifier>{30970cac-b23f-4966-ac66-2e89235b8af5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Proto CCs">
+      <UniqueIdentifier>{02580423-8fcb-44f4-be7c-d05588fba42e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="theMain.cpp">
@@ -114,6 +120,15 @@
     <ClCompile Include="cCheckpointTriggerGenerator.cpp">
       <Filter>Collision</Filter>
     </ClCompile>
+    <ClCompile Include="Server.cpp">
+      <Filter>Networking</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sharedinclude\gen\cc\CarState.pb.cc">
+      <Filter>Proto CCs</Filter>
+    </ClCompile>
+    <ClCompile Include="NetworkCar.cpp">
+      <Filter>Gameplay\Car</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cShaderManager.h">
@@ -175,6 +190,12 @@
     </ClInclude>
     <ClInclude Include="cCheckpointTriggerGenerator.h">
       <Filter>Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="Server.h">
+      <Filter>Networking</Filter>
+    </ClInclude>
+    <ClInclude Include="NetworkCar.h">
+      <Filter>Gameplay\Car</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

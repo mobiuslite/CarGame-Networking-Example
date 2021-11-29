@@ -81,12 +81,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <ExternalIncludePath>$(ProjectDir)include;$(ExternalIncludePath)</ExternalIncludePath>
-    <LibraryPath>$(ProjectDir)lib/Debug_x64;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)sharedLib\$(Platform)\$(Configuration);$(ProjectDir)lib/Debug_x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)sharedinclude;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <ExternalIncludePath>$(ProjectDir)include;$(ExternalIncludePath)</ExternalIncludePath>
-    <LibraryPath>$(ProjectDir)lib/Release_x64;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)sharedLib\$(Platform)\$(Configuration);$(ProjectDir)lib/Release_x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)sharedinclude;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -126,8 +128,12 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;BufferLibrary.lib;libprotobufd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -143,10 +149,15 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;BufferLibrary.lib;libprotobuf.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\sharedinclude\gen\cc\CarState.pb.cc" />
     <ClCompile Include="cBasicTextureManager\C24BitBMPpixel.cpp" />
     <ClCompile Include="cBasicTextureManager\cBasicTextureManager.cpp" />
     <ClCompile Include="cBasicTextureManager\CTextureFromBMP.cpp" />
@@ -164,8 +175,10 @@
     <ClCompile Include="DrawObjectFunction.cpp" />
     <ClCompile Include="FlyCamera\cFlyCamera.cpp" />
     <ClCompile Include="glad.c" />
+    <ClCompile Include="NetworkCar.cpp" />
     <ClCompile Include="SceneLoader\cSceneLoader.cpp" />
     <ClCompile Include="SceneLoader\cSceneSaver.cpp" />
+    <ClCompile Include="Server.cpp" />
     <ClCompile Include="theMain.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
@@ -187,8 +200,10 @@
     <ClInclude Include="FlyCamera\cFlyCamera.h" />
     <ClInclude Include="FlyCamera\iCamera.h" />
     <ClInclude Include="GLCommon.h" />
+    <ClInclude Include="NetworkCar.h" />
     <ClInclude Include="SceneLoader\cSceneLoader.h" />
     <ClInclude Include="SceneLoader\sModel.h" />
+    <ClInclude Include="Server.h" />
     <ClInclude Include="sTransform.h" />
     <ClInclude Include="sVertex_types.h" />
   </ItemGroup>
@@ -202,4 +217,11 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ItemGroup>
+    <DLLCopyFiles Include="$(SolutionDir)RequiredDLLs\$(Platform)\$(Configuration)\**" />
+  </ItemGroup>
+  <Target Name="AfterBuild">
+    <Message Text="Copying dlls to out dir" />
+    <Copy sourceFiles="@(DLLCopyFiles)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  </Target>
 </Project>

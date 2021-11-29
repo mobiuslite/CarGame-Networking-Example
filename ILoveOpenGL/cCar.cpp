@@ -19,6 +19,11 @@ cCar::~cCar()
 	delete this->collider;
 }
 
+glm::vec3 cCar::Velocity()
+{
+	return this->m_velocity;
+}
+
 void cCar::Accelerate()
 {
 	this->isAccelerating = true;
