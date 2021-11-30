@@ -18,7 +18,7 @@ public:
 	//Gets the direction the game object is facing
 	glm::vec3 ForwardVector();
 
-	virtual void Integrate(float deltaTime) = 0;
+	virtual bool Integrate(float deltaTime) = 0;
 
 	cMesh* Mesh();
 protected:

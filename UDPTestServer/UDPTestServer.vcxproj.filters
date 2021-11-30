@@ -21,7 +21,7 @@
     <ClCompile Include="server_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\sharedinclude\gen\cc\CarState.pb.cc">
+    <ClCompile Include="..\sharedinclude\gen\cc\CarStateArray.pb.cc">
       <Filter>Proto CCs</Filter>
     </ClCompile>
   </ItemGroup>

@@ -16,8 +16,6 @@
 
 #include <BufferLibrary/cBuffer.h>
 
-#include <gen/CarState.pb.h>
-
 #define PORT 27015
 
 // Link with ws2_32.lib
@@ -25,6 +23,10 @@
 
 std::vector<ClientInfo*> ClientArray;
 cBuffer buffer = cBuffer(512);
+
+bool gameStarted = false;
+
+void UpdateScreen();
 
 int main()
 {
@@ -108,7 +110,7 @@ int main()
     current_time = std::chrono::system_clock::now();
     previous_update_time = current_time;
 
-    //60hz (roughly)
+    //24hz (roughly)
     std::chrono::milliseconds tickTime = std::chrono::milliseconds(41);
 
     while (true)
@@ -149,11 +151,31 @@ int main()
 
         current_time = std::chrono::system_clock::now();
 
+        float deltaTime = (std::chrono::duration_cast<std::chrono::milliseconds>(current_time - previous_update_time).count()) / 1000.0f;
+
+        //Erases client after they don't contact the server for a certain amount of time
+        for (std::vector<ClientInfo*>::iterator client = ClientArray.begin(); client != ClientArray.end(); client++)
+        {
+            if ((*client)->carState.username() == "")
+            {
+                (*client)->timeoutElapsed += deltaTime;
+                if ((*client)->timeoutElapsed >= (*client)->timeoutTime)
+                {
+                    ClientInfo* clientToDelete = *client;
+                    ClientArray.erase(client);
+                    delete clientToDelete;
+
+                    UpdateScreen();
+                    break;
+                }
+            }
+        }
+
         //Tick has happened, sent stuff to all clients!
         if (current_time >= previous_update_time + tickTime)
         {
             previous_update_time = current_time;
-            
+
             for (ClientInfo* client : ClientArray)
             {
                 sockaddr_in clientAddress;
@@ -162,37 +184,48 @@ int main()
                 clientAddress.sin_port = client->port;
                 clientAddress.sin_addr.s_addr = inet_addr(client->ip.c_str());
 
+                bufferProtos::CarStateArray carArray;
+
                 for (ClientInfo* clientToSend : ClientArray)
                 {
                     //Don't send the current client their own info (cause why would you do that????)
-                    if (client->username != clientToSend->username)
+                    if (client->username != clientToSend->username && clientToSend->carState.username() != "")
                     {
-                         //   Send!
-                        buffer.ClearBuffer();
-
-                        std::string messageToSend = clientToSend->carState;
-
-                        buffer.WriteShort((short)messageToSend.size());
-                        buffer.WriteString(messageToSend);
-                        std::string bufferMsg = buffer.GetBufferMessage();
-
-                        int BufLen = (int)bufferMsg.size();
-
-                        //wprintf(L"Sending a datagram to the receiver...\n");
-                        int result = sendto(listenSocket,
-                            bufferMsg.c_str(), BufLen, 0, (SOCKADDR*)&clientAddress, sizeof(clientAddress));
-                        if (result == SOCKET_ERROR)
-                        {
-                            wprintf(L"sendto failed with error: %d\n", WSAGetLastError());
-                            closesocket(listenSocket);
-                            WSACleanup();
-                        }
+                        //Adds car to car array
+                        bufferProtos::CarStateArray_CarState* addedCar = carArray.add_cararray();
+                        *addedCar = clientToSend->carState;
                     }
+                }
+                //   Send!
+                buffer.ClearBuffer();
+
+                //Serialize car array
+                std::string messageToSend;
+                carArray.SerializeToString(&messageToSend);
+
+                buffer.WriteShort((short)0);
+                buffer.WriteShort((short)messageToSend.size());
+                buffer.WriteString(messageToSend);
+                std::string bufferMsg = buffer.GetBufferMessage();
+
+                int BufLen = (int)bufferMsg.size();
+
+                //Send car array
+                int result = sendto(listenSocket,
+                    bufferMsg.c_str(), BufLen, 0, (SOCKADDR*)&clientAddress, sizeof(clientAddress));
+                if (result == SOCKET_ERROR)
+                {
+                    wprintf(L"sendto failed with error: %d\n", WSAGetLastError());
+                    closesocket(listenSocket);
+                    WSACleanup();
                 }
             }
 
+            //Sets the car states username to empty
+            //Unless the client sends something again, it will not be sent to the client
+            //Without this, the server would constantly send a car states position even if they were dissconnected.
+            std::for_each(ClientArray.begin(), ClientArray.end(), [](ClientInfo* info) { info->carState.set_username(""); });
         }
-
 
         timeval tv = { 0 };
         tv.tv_sec = 0;
@@ -247,7 +280,8 @@ int main()
                 ClientInfo* currentClient = nullptr;
 
                 //Didn't find the client
-                if (foundClientIt == ClientArray.end())
+                //Don't let new players join while game is running.
+                if (foundClientIt == ClientArray.end() && !gameStarted)
                 {
                     //Creates new client
 
@@ -261,6 +295,8 @@ int main()
 
                     //Sets the current client to the most recent client
                     currentClient = ClientArray[ClientArray.size() - 1];
+
+                    UpdateScreen();
                 }
                 //Found the client!
                 else
@@ -277,18 +313,32 @@ int main()
                 buffer.ClearBuffer();
                 buffer.SetBufferMessage(recvString);
 
-                short stringLength = buffer.ReadShort();
-                std::string message = buffer.ReadString(stringLength);
+                short messageType = buffer.ReadShort();
 
-                bufferProtos::CarState carState;
-                bool success = carState.ParseFromString(message);
-
-                if (success)
+                if (messageType == 0)
                 {
-                    currentClient->carState = message;
-                    currentClient->username = carState.username();
-                }
+                    short stringLength = buffer.ReadShort();
+                    std::string message = buffer.ReadString(stringLength);
 
+                    bufferProtos::CarStateArray_CarState carState;
+                    bool success = carState.ParseFromString(message);
+
+                    if (success)
+                    {
+                        currentClient->carState = carState;
+                        currentClient->timeoutElapsed = 0.0f;
+                        if (currentClient->username == "")
+                        {
+                            currentClient->username = carState.username();
+                            UpdateScreen();
+                        }
+                    }
+                }
+                else if (messageType == 1)
+                {
+                    currentClient->isReady = !currentClient->isReady;
+                    UpdateScreen();
+                }
             }
         }
     }
@@ -326,4 +376,16 @@ int main()
     printf("Goodnight!");
 
     return 0;
+}
+
+void UpdateScreen()
+{
+    system("cls");
+
+    std::cout << "Number of clients: " << ClientArray.size() << std::endl << std::endl;
+
+    for (ClientInfo* client : ClientArray)
+    {
+        std::cout << client->username << ": " << ((client->isReady) ? "Ready!" : "Not Ready") << std::endl;
+    }
 }

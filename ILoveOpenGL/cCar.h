@@ -16,7 +16,7 @@ public:
 	void TurnLeft(float deltaTime);
 	void TurnRight(float deltaTime);
 
-	virtual void Integrate(float deltaTime);
+	virtual bool Integrate(float deltaTime);
 
 	glm::vec3 ForceDrag();
 	glm::vec3 ForceRollingResistance();

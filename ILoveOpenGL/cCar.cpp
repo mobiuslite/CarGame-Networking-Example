@@ -51,7 +51,7 @@ void cCar::TurnRight(float deltaTime)
 	this->Mesh()->orientationXYZ.y -= TURN_SPEED * deltaTime;
 }
 
-void cCar::Integrate(float deltaTime)
+bool cCar::Integrate(float deltaTime)
 {
 	//a = F / M
 	this->m_acceleration = ForceLongitudinal(this->isAccelerating ? 2500.0f : 0.0f) / this->m_mass;
@@ -63,6 +63,8 @@ void cCar::Integrate(float deltaTime)
 
 	//Updates the position of this car's collider
 	this->collider->position = this->Transform().position;
+
+	return true;
 }
 
 glm::vec3 cCar::ForceDrag()

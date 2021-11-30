@@ -151,7 +151,7 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\sharedinclude\gen\cc\CarState.pb.cc" />
+    <ClCompile Include="..\sharedinclude\gen\cc\CarStateArray.pb.cc" />
     <ClCompile Include="server_main.cpp" />
   </ItemGroup>
   <ItemGroup>

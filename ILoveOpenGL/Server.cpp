@@ -12,7 +12,7 @@
 #include <winsock2.h>
 
 #include "Server.h"
-#include <gen/CarState.pb.h>
+#include <gen/CarStateArray.pb.h>
 cServer::cServer(std::string ip, short port)
 {
     int iResult;
@@ -96,18 +96,37 @@ cServer::~cServer()
 
     this->networkCars.clear();
 }
+
+void cServer::RemoveNetworkCar(cNetworkCar* car)
+{
+    for (std::map<std::string, cNetworkCar*>::iterator carMapIt = this->networkCars.begin(); carMapIt != this->networkCars.end();)
+    {
+        if ((*carMapIt).second == car)
+        {
+            this->networkCars.erase(carMapIt);
+            delete car->Mesh();
+            delete car;
+            break;
+        }
+        else
+        {
+            ++carMapIt;
+        }
+    }
+}
+
 bool cServer::SendCarState(std::string username, glm::vec3 pos, glm::vec3 velo, float yRotationRadians)
 {
     if (this->wsaStarted)
     {
         buffer.ClearBuffer();
 
-        bufferProtos::CarState carState;
+        bufferProtos::CarStateArray_CarState carState;
 
-        bufferProtos::CarState_Vector2* position = new bufferProtos::CarState_Vector2();
+        bufferProtos::CarStateArray_CarState_Vector2* position = new bufferProtos::CarStateArray_CarState_Vector2();
         position->set_x(pos.x);
         position->set_z(pos.z);
-        bufferProtos::CarState_Vector2* velocity = new bufferProtos::CarState_Vector2();
+        bufferProtos::CarStateArray_CarState_Vector2* velocity = new bufferProtos::CarStateArray_CarState_Vector2();
         velocity->set_x(velo.x);
         velocity->set_z(velo.z);
 
@@ -119,6 +138,7 @@ bool cServer::SendCarState(std::string username, glm::vec3 pos, glm::vec3 velo, 
         std::string messageToSend;
         carState.SerializeToString(&messageToSend);
 
+        buffer.WriteShort((short)0);
         buffer.WriteShort((short)messageToSend.size());
         buffer.WriteString(messageToSend);
         std::string bufferMsg = buffer.GetBufferMessage();
@@ -147,7 +167,37 @@ bool cServer::SendCarState(std::string username, glm::vec3 pos, glm::vec3 velo, 
     }
 }
 
-void cServer::CheckReceive(std::vector<cMesh*>* vecMeshes)
+bool cServer::SendReady()
+{
+    if (this->wsaStarted)
+    {
+        buffer.ClearBuffer();
+        buffer.WriteShort(1);
+
+        std::string bufferMsg = buffer.GetBufferMessage();
+
+        int BufLen = (int)bufferMsg.size();
+
+        //wprintf(L"Sending a datagram to the receiver...\n");
+        int result = sendto(this->recvSocket,
+            bufferMsg.c_str(), BufLen, 0, (SOCKADDR*)&this->serverAddress, sizeof(this->serverAddress));
+        if (result == SOCKET_ERROR)
+        {
+            wprintf(L"sendto failed with error: %d\n", WSAGetLastError());
+            closesocket(this->recvSocket);
+            WSACleanup();
+            this->wsaStarted = false;
+            return false;
+        }
+    }
+    else
+    {
+        //WSA didn't work, so just say nothing went wrong everytime you try to tell the server something
+        return true;
+    }
+}
+
+void cServer::CheckReceive()
 {
     FD_SET ReadSet;
     timeval tv = { 0 };
@@ -172,7 +222,7 @@ void cServer::CheckReceive(std::vector<cMesh*>* vecMeshes)
     if (total > 0)
     {
 
-        const int bufSize = 128;
+        const int bufSize = 512;
         char RecvBuf[bufSize];
 
         int result = recvfrom(this->recvSocket,
@@ -199,46 +249,54 @@ void cServer::CheckReceive(std::vector<cMesh*>* vecMeshes)
             buffer.ClearBuffer();
             buffer.SetBufferMessage(recvString);
 
-            short stringLength = buffer.ReadShort();
-            std::string message = buffer.ReadString(stringLength);
+            short messageType = buffer.ReadShort();
 
-            bufferProtos::CarState carState;
-            bool success = carState.ParseFromString(message);
-
-            if (success)
+            if (messageType == 0)
             {
-                std::string netCarName = carState.username();
+                short stringLength = buffer.ReadShort();
+                std::string message = buffer.ReadString(stringLength);
 
-                if (this->networkCars.count(netCarName))
+                bufferProtos::CarStateArray carStateArray;
+                bool success = carStateArray.ParseFromString(message);
+
+                if (success)
                 {
-                    //Car exists
-                    //Update old car
-                    cNetworkCar* updateCar = this->networkCars[netCarName];
+                    for (size_t i = 0; i < carStateArray.cararray_size(); i++)
+                    {
 
-                    glm::vec2 pos = glm::vec2(carState.position().x(), carState.position().z());
-                    glm::vec2 velo = glm::vec2(carState.velocity().x(), carState.velocity().z());
-                    updateCar->SetNetworkCar(pos, velo, carState.yradiansrotation());
+                        bufferProtos::CarStateArray_CarState netCar = carStateArray.cararray(i);
+                        std::string netCarName = netCar.username();
 
-                }
-                else
-                {
-                    //Car doesn't exist
-                    //Make new Mesh
-                    cMesh* carMesh = new cMesh();
-                    carMesh->meshName = "car.ply";
-                    carMesh->friendlyName = "NetworkedCar";
+                        if (this->networkCars.count(netCarName))
+                        {
+                            //Car exists
+                            //Update old car
+                            cNetworkCar* updateCar = this->networkCars[netCarName];
 
-                    cNetworkCar* newCar = new cNetworkCar(carMesh);
-                    glm::vec2 pos = glm::vec2(carState.position().x(), carState.position().z());
-                    glm::vec2 velo = glm::vec2(carState.velocity().x(), carState.velocity().z());
-                    newCar->SetNetworkCar(pos, velo, carState.yradiansrotation());
+                            glm::vec2 pos = glm::vec2(netCar.position().x(), netCar.position().z());
+                            glm::vec2 velo = glm::vec2(netCar.velocity().x(), netCar.velocity().z());
+                            updateCar->SetNetworkCar(pos, velo, netCar.yradiansrotation());
 
-                    //Adds mesh and car to game
-                    vecMeshes->push_back(carMesh);
-                    this->networkCars.insert(std::pair<std::string, cNetworkCar*>(netCarName, newCar));
+                        }
+                        else
+                        {
+                            //Car doesn't exist
+                            //Make new Mesh
+                            cMesh* carMesh = new cMesh();
+                            carMesh->meshName = "car.ply";
+                            carMesh->friendlyName = "NetworkedCar";
+
+                            cNetworkCar* newCar = new cNetworkCar(carMesh);
+                            glm::vec2 pos = glm::vec2(netCar.position().x(), netCar.position().z());
+                            glm::vec2 velo = glm::vec2(netCar.velocity().x(), netCar.velocity().z());
+                            newCar->SetNetworkCar(pos, velo, netCar.yradiansrotation());
+
+                            //Adds mesh and car to game
+                            this->networkCars.insert(std::pair<std::string, cNetworkCar*>(netCarName, newCar));
+                        }
+                    }
                 }
             }
-
         }
     }
 }

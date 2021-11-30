@@ -18,7 +18,11 @@ public:
 	~cServer();
 
 	bool SendCarState(std::string username, glm::vec3 pos, glm::vec3 velo, float yRotationRadians);
-	void CheckReceive(std::vector<cMesh*>* vecMeshes);
+	bool SendReady();
+
+	void CheckReceive();
+
+	void RemoveNetworkCar(cNetworkCar* car);
 
 	std::map<std::string, cNetworkCar*> networkCars;
 

@@ -741,18 +741,19 @@ int main(void)
             }
         }
 
-        //Add gameobjects to render list.
-        for (unsigned int index = 0; index != g_gameObjects.size(); index++)
+        //Adds cars to render list.
+        for (std::map<std::string, cNetworkCar*>::iterator carIt = server.networkCars.begin(); carIt != server.networkCars.end(); carIt++)
         {
-            if ((g_gameObjects[index].Mesh()->wholeObjectDiffuseRGBA.a < 1.0f || g_vecMeshes->at(index)->bUseAlphaMask))
+            if ((*carIt).second->Mesh()->wholeObjectDiffuseRGBA.a < 1.0f || (*carIt).second->Mesh()->bUseAlphaMask)
             {
-                transparentMeshes.push_back(g_gameObjects[index].Mesh());
+                transparentMeshes.push_back((*carIt).second->Mesh());
             }
             else
             {
-                opaqueMeshes.push_back(g_gameObjects[index].Mesh());
+                opaqueMeshes.push_back((*carIt).second->Mesh());
             }
         }
+
         //Sort transparent objects.
         std::sort(transparentMeshes.begin(), transparentMeshes.end(), DistanceToCameraPredicate);
 
@@ -801,15 +802,30 @@ int main(void)
 
         //Integrate cars
         playerCar->Integrate(deltaTime);
-        for (std::map<std::string, cNetworkCar*>::iterator carMapIt = server.networkCars.begin(); carMapIt != server.networkCars.end(); carMapIt++)
+
+        //Finds cars to delete
+        std::vector<cNetworkCar*> carsToDelete;
+        for (std::map<std::string, cNetworkCar*>::iterator carMapIt = server.networkCars.begin(); carMapIt != server.networkCars.end();)
         {
-            (*carMapIt).second->Integrate((float)deltaTime);
+            cNetworkCar* car = (*carMapIt).second;
+            if (!car->Integrate((float)deltaTime))
+            {
+                carsToDelete.push_back((*carMapIt).second);
+            }
+
+            ++carMapIt;
+        }
+
+        //Deletes cars
+        for (cNetworkCar* car : carsToDelete)
+        {
+            server.RemoveNetworkCar(car);
         }
 
         g_FlyCamera->Update(deltaTime);
 
         server.SendCarState(username, playerCar->Transform().position, playerCar->Velocity(), playerCar->Transform().rotation.y);
-        server.CheckReceive(g_vecMeshes);
+        server.CheckReceive();
     }
 
     delete g_FlyCamera;

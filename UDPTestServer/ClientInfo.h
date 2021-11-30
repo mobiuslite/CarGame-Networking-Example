@@ -5,6 +5,8 @@
 #include <vector>
 #include "Car.h"
 
+#include <gen/CarStateArray.pb.h>
+
 struct ClientInfo
 {
 	std::string ip;
@@ -12,7 +14,12 @@ struct ClientInfo
 
 	std::string username;
 
-	std::string carState;
+	bool isReady = false;
+
+	float timeoutTime = 4000.0f;
+	float timeoutElapsed = 0.0f;
+
+	bufferProtos::CarStateArray_CarState carState;
 };
 
 struct ClientFinder
