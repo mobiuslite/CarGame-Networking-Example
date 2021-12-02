@@ -176,6 +176,43 @@ int main()
         {
             previous_update_time = current_time;
 
+            //If the game is running, check to see if everyone is finished.
+            if (gameStarted && ClientArray.size() > 0)
+            {
+                bool everyoneFinished = true;
+                for (ClientInfo* client : ClientArray)
+                {
+                    if (client->isReady)
+                    {
+                        everyoneFinished = false;
+                        break;
+                    }
+                }
+
+                if (everyoneFinished)
+                {
+                    //Get fastest time
+                    ClientInfo* fastedClient = nullptr;
+                    float fastedTime = std::numeric_limits<float>::max();
+
+                    for (ClientInfo* client : ClientArray)
+                    {
+                        float lapTimeSeconds = std::chrono::duration_cast<std::chrono::milliseconds>(client->endTime - client->startTime).count() / 1000.0f;
+
+                        if (lapTimeSeconds < fastedTime)
+                        {
+                            fastedClient = client;
+                            fastedTime = lapTimeSeconds;
+                        }
+                    }
+
+                    fastedClient->score++;
+
+                    gameStarted = false;
+                    UpdateScreen();
+                }
+            }
+
             if (!gameStarted && ClientArray.size() > 0)
             {
                 bool everyoneReady = true;
@@ -188,18 +225,23 @@ int main()
                     }
                 }
 
+                //If everyone is ready, send a packet to everyone saying to start
                 if (everyoneReady)
                 {
                     gameStarted = true;
+                    UpdateScreen();
 
                     for (ClientInfo* client : ClientArray)
                     {
+                        client->startTime = std::chrono::system_clock::now();
+
                         sockaddr_in clientAddress;
 
                         clientAddress.sin_family = AF_INET;
                         clientAddress.sin_port = client->port;
                         clientAddress.sin_addr.s_addr = inet_addr(client->ip.c_str());
 
+                        buffer.ClearBuffer();
                         //Send a message to everyone to start
                         buffer.WriteShort((short)1);
                         std::string bufferMsg = buffer.GetBufferMessage();
@@ -378,11 +420,49 @@ int main()
                         }
                     }
                 }
+
+                //Client sent ready
                 else if (messageType == 1)
                 {
-                    currentClient->isReady = !currentClient->isReady;
+                    if (!gameStarted)
+                    {
+                        currentClient->isReady = !currentClient->isReady;
+                        UpdateScreen();
+
+                        //Send ready back so they know they've readied on the server.
+                        buffer.ClearBuffer();
+                        buffer.WriteShort((short)10);
+                        std::string bufferMsg = buffer.GetBufferMessage();
+
+                        int BufLen = (int)bufferMsg.size();
+
+                        sockaddr_in clientAddress;
+
+                        clientAddress.sin_family = AF_INET;
+                        clientAddress.sin_port = currentClient->port;
+                        clientAddress.sin_addr.s_addr = inet_addr(currentClient->ip.c_str());
+                        //Send car array
+                        int result = sendto(listenSocket,
+                            bufferMsg.c_str(), BufLen, 0, (SOCKADDR*)&clientAddress, sizeof(clientAddress));
+                        if (result == SOCKET_ERROR)
+                        {
+                            wprintf(L"sendto failed with error: %d\n", WSAGetLastError());
+                            closesocket(listenSocket);
+                            WSACleanup();
+                        }
+
+                    }
+                }
+
+                //Client sent done
+                else if (messageType == 2)
+                {
+                    currentClient->endTime = std::chrono::system_clock::now();
+                    currentClient->isReady = false;
                     UpdateScreen();
                 }
+
+                //Connection attempt sent from client, send back, yep we hear ya!
                 else if (messageType == 100)
                 {
                     buffer.ClearBuffer();
@@ -474,10 +554,11 @@ void UpdateScreen()
 {
     system("cls");
 
+    std::cout << ((gameStarted) ? "Game started!" : "Waiting on everyone to ready up!") << std::endl;
     std::cout << "Number of clients: " << ClientArray.size() << std::endl << std::endl;
 
     for (ClientInfo* client : ClientArray)
     {
-        std::cout << client->username << ": " << ((client->isReady) ? "Ready!" : "Not Ready") << std::endl;
+        std::cout << client->username << ": " << ((client->isReady) ? "Ready!" : "Not Ready") <<" | Times Won: " << client->score << std::endl;
     }
 }

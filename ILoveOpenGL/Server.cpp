@@ -15,6 +15,21 @@
 #include <gen/CarStateArray.pb.h>
 cServer::cServer(std::string ip, short port)
 {
+    float checkpointRadius = 4.5f;
+
+    //Adds checkpoints to the list of checkpoints
+    this->checkpoints.push_back(new cCheckpointTriggerGenerator(glm::vec3(-30.0f, 0.0f, -40.0f), checkpointRadius, false));
+    this->checkpoints.push_back(new cCheckpointTriggerGenerator(glm::vec3(-61.0f, 0.0f, -12.0f), checkpointRadius, false));
+    this->checkpoints.push_back(new cCheckpointTriggerGenerator(glm::vec3(-30.0f, 0.0f, 8.5f), checkpointRadius, false));
+    this->checkpoints.push_back(new cCheckpointTriggerGenerator(glm::vec3(-55.0f, 0.0f, 42.f), checkpointRadius, false));
+    this->checkpoints.push_back(new cCheckpointTriggerGenerator(glm::vec3(23.0f, 0.0f, 26.5f), checkpointRadius, false));
+    this->checkpoints.push_back(new cCheckpointTriggerGenerator(glm::vec3(58.0f, 0.0f, 36.f), checkpointRadius, false));
+    this->checkpoints.push_back(new cCheckpointTriggerGenerator(glm::vec3(45.0f, 0.0f, 5.5f), checkpointRadius, false));
+    this->checkpoints.push_back(new cCheckpointTriggerGenerator(glm::vec3(53.0f, 0.0f, -49.f), checkpointRadius, false));
+    this->checkpoints.push_back(new cCheckpointTriggerGenerator(glm::vec3(24.0f, 0.0f, -51.f), checkpointRadius, false));
+    this->checkpoints.push_back(new cCheckpointTriggerGenerator(glm::vec3(22.0f, 0.0f, -41.7f), checkpointRadius, false));
+    this->checkpoints.push_back(new cCheckpointTriggerGenerator(glm::vec3(0.f, 0.0f, -40.0f), checkpointRadius, false));
+
     int iResult;
     WSADATA wsaData;
     //----------------------
@@ -70,6 +85,12 @@ cServer::cServer(std::string ip, short port)
 }
 cServer::~cServer()
 {
+    for (cCheckpointTriggerGenerator* checkpoint : this->checkpoints)
+    {
+        delete checkpoint;
+    }
+    checkpoints.clear();
+
     for (std::map<std::string, cNetworkCar*>::iterator deleteCarIt = this->networkCars.begin(); deleteCarIt != this->networkCars.end(); deleteCarIt++)
     {
         delete this->networkCars[(*deleteCarIt).first];
@@ -177,9 +198,54 @@ bool cServer::SendReady()
         return true;
     }
 }
+bool cServer::SendDoneLap()
+{
+    if (this->wsaStarted)
+    {
+        buffer.ClearBuffer();
+        buffer.WriteShort(2);
+
+        std::string bufferMsg = buffer.GetBufferMessage();
+
+        int BufLen = (int)bufferMsg.size();
+
+        //wprintf(L"Sending a datagram to the receiver...\n");
+        int result = sendto(this->recvSocket,
+            bufferMsg.c_str(), BufLen, 0, (SOCKADDR*)&this->serverAddress, sizeof(this->serverAddress));
+        if (result == SOCKET_ERROR)
+        {
+            wprintf(L"sendto failed with error: %d\n", WSAGetLastError());
+            closesocket(this->recvSocket);
+            WSACleanup();
+            this->wsaStarted = false;
+            return false;
+        }
+    }
+    else
+    {
+        //WSA didn't work, so just say nothing went wrong everytime you try to tell the server something
+        return true;
+    }
+}
+
+void cServer::DoneLap()
+{
+    //this->checkpoints[0]->isActive = false;
+    std::cout << "Lap Time: " << lapTime << std::endl;
+
+    this->lapTime = 0.0f;
+    
+    this->gameStarted = false;
+    this->ready = false;
+
+    SendDoneLap();
+}
 
 void cServer::CheckReceive(float deltaTime)
 {
+    if(gameStarted)
+        lapTime += deltaTime;
+
     FD_SET ReadSet;
     timeval tv = { 0 };
     tv.tv_sec = 0;
@@ -280,10 +346,22 @@ void cServer::CheckReceive(float deltaTime)
                     }
                 }
             }
+
+            //Start round
             else if (messageType == 1)
             {
-
+                if (!gameStarted)
+                {
+                    gameStarted = true;
+                    this->checkpoints[0]->isActive = true;
+                }
             }
+            //Ready was received
+            else if (messageType == 10)
+            {
+                ready = !ready;
+            }
+            //Server online check
             else if (messageType == 100)
             {
                 connected = true;

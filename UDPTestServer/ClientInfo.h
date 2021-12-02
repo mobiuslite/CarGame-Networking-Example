@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "Car.h"
+#include <chrono>
 
 #include <gen/CarStateArray.pb.h>
 
@@ -18,6 +19,11 @@ struct ClientInfo
 
 	float timeoutTime = 4000.0f;
 	float timeoutElapsed = 0.0f;
+
+	int score = 0;
+
+	std::chrono::system_clock::time_point startTime;
+	std::chrono::system_clock::time_point endTime;
 
 	bufferProtos::CarStateArray_CarState carState;
 };

@@ -4,7 +4,7 @@
 cCollisionWorld::cCollisionWorld()
 {
 	this->collider = nullptr;
-	this->lapTime = 0.0f;
+	this->server = nullptr;
 }
 
 void cCollisionWorld::Integrate(float deltaTime)
@@ -27,21 +27,21 @@ void cCollisionWorld::Integrate(float deltaTime)
 			//Done lap
 			else
 			{
-				std::cout << "Lap Time: " << lapTime << std::endl;
-
-				this->lapTime = 0.0f;
-				(*this->colliderTriggers.begin())->isActive = true;
+				this->server->DoneLap();
 			}
 		}
 	}
-
-	lapTime += deltaTime;
 }
 
 void cCollisionWorld::SetCollider(cCollider* collider)
 {
 	this->collider = collider;
 }
+void cCollisionWorld::SetServer(cServer* server)
+{
+	this->server = server;
+}
+
 void cCollisionWorld::AddCheckpointTrigger(cCheckpointTriggerGenerator* gen)
 {
 	this->colliderTriggers.push_back(gen);

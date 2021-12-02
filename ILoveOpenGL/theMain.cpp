@@ -451,42 +451,14 @@ int main(void)
 
     cCollisionWorld world = cCollisionWorld();
 
-    float checkpointRadius = 4.0f;
-
-    cCheckpointTriggerGenerator checkpointOne = cCheckpointTriggerGenerator(glm::vec3(-30.0f, 0.0f, -40.0f), checkpointRadius, true);
-    world.AddCheckpointTrigger(&checkpointOne);
-
-    cCheckpointTriggerGenerator checkpointTwo = cCheckpointTriggerGenerator(glm::vec3(-61.0f, 0.0f, -12.0f), checkpointRadius, false);
-    world.AddCheckpointTrigger(&checkpointTwo);
-
-    cCheckpointTriggerGenerator checkpointThree = cCheckpointTriggerGenerator(glm::vec3(-30.0f, 0.0f, 8.5f), checkpointRadius, false);
-    world.AddCheckpointTrigger(&checkpointThree);
-
-    cCheckpointTriggerGenerator checkpointFour = cCheckpointTriggerGenerator(glm::vec3(-55.0f, 0.0f, 42.f), checkpointRadius, false);
-    world.AddCheckpointTrigger(&checkpointFour);
-
-    cCheckpointTriggerGenerator checkpointFive = cCheckpointTriggerGenerator(glm::vec3(23.0f, 0.0f, 26.5f), checkpointRadius, false);
-    world.AddCheckpointTrigger(&checkpointFive);
-
-    cCheckpointTriggerGenerator checkpointSix = cCheckpointTriggerGenerator(glm::vec3(58.0f, 0.0f, 36.f), checkpointRadius, false);
-    world.AddCheckpointTrigger(&checkpointSix);
-
-    cCheckpointTriggerGenerator checkpointSeven = cCheckpointTriggerGenerator(glm::vec3(45.0f, 0.0f, 5.5f), checkpointRadius, false);
-    world.AddCheckpointTrigger(&checkpointSeven);
-
-    cCheckpointTriggerGenerator checkpointEight = cCheckpointTriggerGenerator(glm::vec3(53.0f, 0.0f, -49.f), checkpointRadius, false);
-    world.AddCheckpointTrigger(&checkpointEight);
-
-    cCheckpointTriggerGenerator checkpointNine = cCheckpointTriggerGenerator(glm::vec3(24.0f, 0.0f, -51.f), checkpointRadius, false);
-    world.AddCheckpointTrigger(&checkpointNine);
-
-    cCheckpointTriggerGenerator checkpointTen = cCheckpointTriggerGenerator(glm::vec3(22.0f, 0.0f, -41.7f), checkpointRadius, false);
-    world.AddCheckpointTrigger(&checkpointTen);
-
-    cCheckpointTriggerGenerator checkpointEleven = cCheckpointTriggerGenerator(glm::vec3(0.f, 0.0f, -40.0f), checkpointRadius, false);
-    world.AddCheckpointTrigger(&checkpointEleven);
+    //Add checkpoints to world
+    for (cCheckpointTriggerGenerator* checkpoint : server.checkpoints)
+    {
+        world.AddCheckpointTrigger(checkpoint);
+    }
 
     world.SetCollider(playerCar->collider);
+    world.SetServer(&server);
 
 
     const double MAX_DELTA_TIME = 0.3;	// 100 ms
@@ -622,9 +594,17 @@ int main(void)
         }//for (unsigned int index
 
         //Sets the debug sphere to the current checkpoint
-        g_DebugSphere->positionXYZ = (*std::find_if(
-            world.colliderTriggers.begin(), world.colliderTriggers.end(), 
-            [](cCheckpointTriggerGenerator* trig) { return trig->isActive == true; }))->position;
+
+        if (server.gameStarted)
+        {
+            g_DebugSphere->positionXYZ = (*std::find_if(
+                world.colliderTriggers.begin(), world.colliderTriggers.end(),
+                [](cCheckpointTriggerGenerator* trig) { return trig->isActive == true; }))->position;
+        }
+        else
+        {
+            g_DebugSphere->positionXYZ = glm::vec3(0.0f, -10.0f, 0.0f);
+        }
 
         g_DebugSphere->scale = 0.01f;
         g_DebugSphere->bDontLight = true;
@@ -645,6 +625,13 @@ int main(void)
         playerCar->Integrate(deltaTime);
         g_FlyCamera->Update(deltaTime);
         tickTimeElapsed += deltaTime;
+
+        //Makes the player immobile to show they are ready.
+        if (server.ready && !server.gameStarted)
+        {
+            playerCar->Mesh()->positionXYZ = glm::vec3(0.0f, 0.0f, -40.0f);
+            playerCar->SetVelocity(glm::vec3(0.0f));
+        }
 
         server.CheckReceive(deltaTime);
 

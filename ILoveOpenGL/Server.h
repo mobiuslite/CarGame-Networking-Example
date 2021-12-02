@@ -9,6 +9,8 @@
 
 #include "NetworkCar.h"
 
+#include "cCheckpointTriggerGenerator.h"
+
 class cServer
 {
 public:
@@ -19,6 +21,9 @@ public:
 
 	bool SendCarState(std::string username, glm::vec3 pos, glm::vec3 velo, float yRotationRadians);
 	bool SendReady();
+	bool SendDoneLap();
+
+	void DoneLap();
 
 	void CheckReceive(float deltaTime);
 
@@ -28,10 +33,16 @@ public:
 	void RemoveNetworkCar(cNetworkCar* car);
 
 	std::map<std::string, cNetworkCar*> networkCars;
+	std::vector<cCheckpointTriggerGenerator*> checkpoints;
 
+	bool gameStarted = false;
+	bool ready = false;
 private:
+
 	bool wsaStarted;
 	bool connected = false;
+
+	float lapTime = 0.0f;
 
 	sockaddr_in serverAddress;
 	//SOCKET sendSocket;

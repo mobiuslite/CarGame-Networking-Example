@@ -23,6 +23,10 @@ glm::vec3 cCar::Velocity()
 {
 	return this->m_velocity;
 }
+void cCar::SetVelocity(glm::vec3 velo)
+{
+	this->m_velocity = velo;
+}
 
 void cCar::Accelerate()
 {
