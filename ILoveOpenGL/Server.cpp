@@ -37,32 +37,10 @@ cServer::cServer(std::string ip, short port)
         wsaStarted = false;
         return ;
     }
-    sockaddr_in RecvAddr;
-    RecvAddr.sin_family = AF_INET;
-    RecvAddr.sin_port = htons(0);
-    //RecvAddr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
-    RecvAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-
-    iResult = bind(this->recvSocket, (SOCKADDR*)&RecvAddr, sizeof(RecvAddr));
-    if (iResult != 0)
-    {
-        wprintf(L"bind failed with error %d\n", WSAGetLastError());
-        this->wsaStarted = false;
-        return;
-    }
 
     int length = 100;
     sockaddr_in test;
     getsockname(this->recvSocket, (SOCKADDR*)&test, &length);
-
-    /*this->sendSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (this->sendSocket == INVALID_SOCKET)
-    {
-        wprintf(L"socket failed with error: %ld\n", WSAGetLastError());
-        WSACleanup();
-        wsaStarted = false;
-        return;
-    }*/
 
     //Set non blocking!
     DWORD NonBlock = 1;
@@ -85,7 +63,10 @@ cServer::cServer(std::string ip, short port)
     serverAddress.sin_port = htons(port);
     serverAddress.sin_addr.s_addr = inet_addr(ip.c_str());
 
+    this->connectAttemptElapsed = 0.0f;
     this->wsaStarted = true;
+
+    SendConnectionAttempt();
 }
 cServer::~cServer()
 {
@@ -197,7 +178,7 @@ bool cServer::SendReady()
     }
 }
 
-void cServer::CheckReceive()
+void cServer::CheckReceive(float deltaTime)
 {
     FD_SET ReadSet;
     timeval tv = { 0 };
@@ -263,7 +244,6 @@ void cServer::CheckReceive()
                 {
                     for (size_t i = 0; i < carStateArray.cararray_size(); i++)
                     {
-
                         bufferProtos::CarStateArray_CarState netCar = carStateArray.cararray(i);
                         std::string netCarName = netCar.username();
 
@@ -285,6 +265,9 @@ void cServer::CheckReceive()
                             cMesh* carMesh = new cMesh();
                             carMesh->meshName = "car.ply";
                             carMesh->friendlyName = "NetworkedCar";
+                            carMesh->positionXYZ.x = netCar.position().x();
+                            carMesh->positionXYZ.z = netCar.position().z();
+                            carMesh->orientationXYZ.y = netCar.yradiansrotation();
 
                             cNetworkCar* newCar = new cNetworkCar(carMesh);
                             glm::vec2 pos = glm::vec2(netCar.position().x(), netCar.position().z());
@@ -297,6 +280,69 @@ void cServer::CheckReceive()
                     }
                 }
             }
+            else if (messageType == 1)
+            {
+
+            }
+            else if (messageType == 100)
+            {
+                connected = true;
+                std::cout << "Server is online!" << std::endl;
+            }
+            //Server shutdown
+            else if (messageType == -1)
+            {
+                for (std::map<std::string, cNetworkCar*>::iterator networkIt = this->networkCars.begin(); networkIt != this->networkCars.end(); networkIt++)
+                {
+                    delete this->networkCars[(*networkIt).first]->Mesh();
+                    delete this->networkCars[(*networkIt).first];
+                }
+
+                this->networkCars.clear();
+                this->connected = false;
+
+                std::cout << "Server has shutdown!" << std::endl;
+            }
         }
     }
+
+    if (!this->connected)
+    {
+        this->connectAttemptElapsed += deltaTime;
+        if (this->connectAttemptElapsed >= this->connectAttemptTime)
+        {
+            this->connectAttemptElapsed = 0.0f;
+            SendConnectionAttempt();
+        }
+    }
+}
+
+void cServer::SendConnectionAttempt()
+{
+    if (this->wsaStarted)
+    {
+        buffer.ClearBuffer();
+        buffer.WriteShort(100);
+
+        std::string bufferMsg = buffer.GetBufferMessage();
+
+        int BufLen = (int)bufferMsg.size();
+
+        printf("Attemping connection to server...\n");
+        int result = sendto(this->recvSocket,
+            bufferMsg.c_str(), BufLen, 0, (SOCKADDR*)&this->serverAddress, sizeof(this->serverAddress));
+        if (result == SOCKET_ERROR)
+        {
+            printf("Server offline!\n");
+            closesocket(this->recvSocket);
+            WSACleanup();
+            this->wsaStarted = false;
+            //return false;
+        }
+    }
+}
+
+bool cServer::isConnected()
+{
+    return connected;
 }

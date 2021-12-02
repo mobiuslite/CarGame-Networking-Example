@@ -87,6 +87,9 @@ std::string sceneName = "project2";
 
 cCar* playerCar;
 
+float tick = 41.0f;
+float tickTimeElapsed = 0.0f;
+
 //Method in DrawObjectFunction
 void extern DrawObject(cMesh* curMesh, glm::mat4 matModel, GLint program, cVAOManager* VAOManager, cBasicTextureManager textureManager, std::map<std::string, GLint> uniformLocations);
 
@@ -132,195 +135,29 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         }*/
     }
 
-    bool bShiftDown = false;
-    bool bControlDown = false;
-    bool bAltDown = false;
-
-//    // Shift down?
-//    if ( mods == GLFW_MOD_SHIFT )       // 0x0001   0000 0001
-//    {
-//        // ONLY shift is down
-//    }
-//    // Control down?
-//    if ( mods == GLFW_MOD_CONTROL  )    // 0x0002   0000 0010
-//    // Alt down?
-//    if ( mods == GLFW_MOD_ALT   )       // 0x0004   0000 0100
-
-    //   0000 0111 
-    // & 0000 0001
-    // -----------
-    //   0000 0001 --> Same as the shift mask
-    
-    // Use bitwise mask to filter out just the shift
-    if ( (mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT)
+    if (key == GLFW_KEY_1 && action == GLFW_PRESS)
     {
-        // Shift is down and maybe other things, too
-        bShiftDown = true;
+        tick = 1000.0f;
+    }else if (key == GLFW_KEY_2 && action == GLFW_PRESS)
+    {
+        tick = 100.0f;
     }
-    if ( (mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL)
+    else if (key == GLFW_KEY_3 && action == GLFW_PRESS)
     {
-        // Shift is down and maybe other things, too
-        bControlDown = true;
+        tick = 10.0f;
     }
-    if ( (mods & GLFW_MOD_ALT) == GLFW_MOD_ALT)
+    else if (key == GLFW_KEY_4 && action == GLFW_PRESS)
     {
-        // Shift is down and maybe other things, too
-        bAltDown = true;
+        tick = 16.f;
+    }
+    else if (key == GLFW_KEY_5 && action == GLFW_PRESS)
+    {
+        tick = 41.f;
     }
 
-    // If you are using a bunch of combos, maybe make a set of 
-    //  functions like "isShiftDownByItself()" and "isShiftDown()", etc.
-    float cameraSpeed = 0.1f;
-    float lightMovementSpeed = .25f;
-    float moveSpeed = 0.05f;
-    float rotateSpeed = 1.0f;
-    float scaleSpeed = 0.015f;
-
-    //Fixes scale speed;
-    for (int i = 0; i < sceneLoader->GetModels()->size(); i++)
+    if (key == GLFW_KEY_ENTER && action == GLFW_PRESS)
     {
-        if (sceneLoader->GetModels()->at(i).fileName == g_vecMeshes->at(g_selectedObject)->meshName)
-        {
-            scaleSpeed *= sceneLoader->GetModels()->at(i).defaultScale;
-        }
-    }
-
-    // If JUST the shift is down, move the "selected" object
-    if ( bShiftDown && ( ! bControlDown ) && ( ! bAltDown ) )
-    {
-        if (transformType == Transform::Translate)
-        {
-            if (key == GLFW_KEY_A) { g_vecMeshes->at(::g_selectedObject)->positionXYZ.x -= moveSpeed; } // Go left
-            if (key == GLFW_KEY_D) { g_vecMeshes->at(::g_selectedObject)->positionXYZ.x += moveSpeed; } // Go right
-            if (key == GLFW_KEY_W) { g_vecMeshes->at(::g_selectedObject)->positionXYZ.z += moveSpeed; }// Go forward 
-            if (key == GLFW_KEY_S) { g_vecMeshes->at(::g_selectedObject)->positionXYZ.z -= moveSpeed; }// Go backwards
-            if (key == GLFW_KEY_Q) { g_vecMeshes->at(::g_selectedObject)->positionXYZ.y -= moveSpeed; }// Go "Down"
-            if (key == GLFW_KEY_E) { g_vecMeshes->at(::g_selectedObject)->positionXYZ.y += moveSpeed; }// Go "Up"
-        }
-        else if (transformType == Transform::Rotate)
-        {
-            if (key == GLFW_KEY_A) { g_vecMeshes->at(::g_selectedObject)->orientationXYZ.x -= glm::radians(rotateSpeed); } // Go left
-            if (key == GLFW_KEY_D) { g_vecMeshes->at(::g_selectedObject)->orientationXYZ.x += glm::radians(rotateSpeed); } // Go right
-            if (key == GLFW_KEY_W) { g_vecMeshes->at(::g_selectedObject)->orientationXYZ.z += glm::radians(rotateSpeed); }// Go forward 
-            if (key == GLFW_KEY_S) { g_vecMeshes->at(::g_selectedObject)->orientationXYZ.z -= glm::radians(rotateSpeed); }// Go backwards
-            if (key == GLFW_KEY_Q) { g_vecMeshes->at(::g_selectedObject)->orientationXYZ.y -= glm::radians(rotateSpeed); }// Go "Down"
-            if (key == GLFW_KEY_E) { g_vecMeshes->at(::g_selectedObject)->orientationXYZ.y += glm::radians(rotateSpeed); }// Go "Up"
-        }
-        else if (transformType == Transform::Scale)
-        {
-            if (key == GLFW_KEY_W)
-            {
-                g_vecMeshes->at(g_selectedObject)->scale += scaleSpeed;
-            }
-            else if (key == GLFW_KEY_S)
-            {
-                g_vecMeshes->at(g_selectedObject)->scale -= scaleSpeed;
-            }
-        }
-    // TODO: Add some controls to change the "selcted object"
-    // i.e. change the ::g_selectedObject value
-
-
-    }//if ( bShiftDown && ( ! bControlDown ) && ( ! bAltDown ) )
-
-    if (key == GLFW_KEY_R && action == GLFW_PRESS)
-    {
-        transformType = Transform::Translate;
-    }
-    else if (key == GLFW_KEY_T && action == GLFW_PRESS)
-    {
-        transformType = Transform::Rotate;
-    }
-    else if (key == GLFW_KEY_Y && action == GLFW_PRESS)
-    {
-        transformType = Transform::Scale;
-    }
-
-    // If JUST the ALT is down, move the "selected" light
-    if ( ( ! bShiftDown ) && ( ! bControlDown ) && bAltDown )
-    {
-        if (key == GLFW_KEY_A)  {   ::gTheLights.theLights[::g_selectedLight].position.x -= lightMovementSpeed;     } // Go left
-        if (key == GLFW_KEY_D)  {   ::gTheLights.theLights[::g_selectedLight].position.x += lightMovementSpeed;     } // Go right
-        if (key == GLFW_KEY_W)  {   ::gTheLights.theLights[::g_selectedLight].position.z += lightMovementSpeed;     }// Go forward 
-        if (key == GLFW_KEY_S)  {   ::gTheLights.theLights[::g_selectedLight].position.z -= lightMovementSpeed;     }// Go backwards
-        if (key == GLFW_KEY_Q)  {   ::gTheLights.theLights[::g_selectedLight].position.y -= lightMovementSpeed;     }// Go "Down"
-        if (key == GLFW_KEY_E)  {   ::gTheLights.theLights[::g_selectedLight].position.y += lightMovementSpeed;     }// Go "Up"
-
-        // constant attenuation
-        if (key == GLFW_KEY_1 ) 
-        {  
-            ::gTheLights.theLights[::g_selectedLight].atten.x *= 0.99f; // -1% less
-        }
-        else if (key == GLFW_KEY_2 ) 
-        {  
-            ::gTheLights.theLights[::g_selectedLight].atten.x *= 1.01f; // +1% more
-        }
-        // linear attenuation
-        else if (key == GLFW_KEY_3 )
-        {  
-            ::gTheLights.theLights[::g_selectedLight].atten.y *= 0.99f; // -1% less
-        }
-        else if (key == GLFW_KEY_4 )
-        {  
-            ::gTheLights.theLights[::g_selectedLight].atten.y *= 1.01f; // +1% more
-        }
-        // quardatic attenuation
-        else if (key == GLFW_KEY_5 )
-        {  
-            ::gTheLights.theLights[::g_selectedLight].atten.z *= 0.99f; // -1% less
-        }
-        else if (key == GLFW_KEY_6 )
-        {  
-            ::gTheLights.theLights[::g_selectedLight].atten.z *= 1.01f; // +1% more
-        }
-
-        if (key == GLFW_KEY_PAGE_UP)
-        {
-            ::gTheLights.theLights[::g_selectedLight].param2.x = 1.0f;
-        }
-        else if (key == GLFW_KEY_PAGE_DOWN)
-        {
-            ::gTheLights.theLights[::g_selectedLight].param2.x = 0.0f;
-        }
-
-        if (key == GLFW_KEY_PERIOD && action == GLFW_PRESS)
-        {
-            if(g_selectedLight >= 1)
-                g_selectedLight--;
-        }
-        else if (key == GLFW_KEY_SLASH && action == GLFW_PRESS)
-        {
-            if (g_selectedLight < cLightManager::NUMBER_OF_LIGHTS - 1)
-                g_selectedLight++;
-        }
-
-        std::cout << ::g_selectedLight << " positionXYZ : "
-            << ::gTheLights.theLights[::g_selectedLight].position.x << ", "
-            << ::gTheLights.theLights[::g_selectedLight].position.y << ", "
-            << ::gTheLights.theLights[::g_selectedLight].position.z << "  "
-            << "attenuation (C, L, Q): " 
-            << ::gTheLights.theLights[::g_selectedLight].atten.x << ", "        // Const
-            << ::gTheLights.theLights[::g_selectedLight].atten.y << ", "        // Linear
-            << ::gTheLights.theLights[::g_selectedLight].atten.z << "  "        // Quadratic
-            << std::endl;
-
-    // TODO: Add some controls to change the "selcted object"
-    // i.e. change the ::g_selectedObject value
-
-
-    }//if ( bShiftDown && ( ! bControlDown ) && ( ! bAltDown ) )
-
-
-    //Changing selected mesh
-    else if (key == GLFW_KEY_SEMICOLON && action == GLFW_PRESS && g_selectedObject > 0)
-    {
-        g_selectedObject--;
-        std::cout << "Selected mesh: " << g_vecMeshes->at(g_selectedObject)->friendlyName << std::endl;
-    }
-    else if (key == GLFW_KEY_APOSTROPHE && action == GLFW_PRESS && g_selectedObject < g_vecMeshes->size() - 1)
-    {
-        g_selectedObject++;
-        std::cout << "Selected mesh: " << g_vecMeshes->at(g_selectedObject)->friendlyName << std::endl;
+        server.SendReady();
     }
 
     return;
@@ -602,6 +439,8 @@ int main(void)
     cMesh* carMesh = new cMesh();
     carMesh->meshName = "car.ply";
     carMesh->friendlyName = "PlayerCar";
+    carMesh->bUseWholeObjectDiffuseColour = true;
+    carMesh->wholeObjectDiffuseRGBA = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
 
     ::g_vecMeshes->push_back(carMesh);
 
@@ -659,6 +498,8 @@ int main(void)
         double deltaTime = currentTime - previousTime;
         deltaTime = (deltaTime > MAX_DELTA_TIME ? MAX_DELTA_TIME : deltaTime);
         previousTime = currentTime;
+
+        float tickTime = tick / 1000.0f;
 
         world.Integrate((float)deltaTime);
 
@@ -802,30 +643,40 @@ int main(void)
 
         //Integrate cars
         playerCar->Integrate(deltaTime);
+        g_FlyCamera->Update(deltaTime);
+        tickTimeElapsed += deltaTime;
 
-        //Finds cars to delete
-        std::vector<cNetworkCar*> carsToDelete;
-        for (std::map<std::string, cNetworkCar*>::iterator carMapIt = server.networkCars.begin(); carMapIt != server.networkCars.end();)
+        server.CheckReceive(deltaTime);
+
+        if (server.isConnected())
         {
-            cNetworkCar* car = (*carMapIt).second;
-            if (!car->Integrate((float)deltaTime))
+
+            //Send car info on tick
+            if (tickTimeElapsed >= tickTime)
             {
-                carsToDelete.push_back((*carMapIt).second);
+                server.SendCarState(username, playerCar->Transform().position, playerCar->Velocity(), playerCar->Transform().rotation.y);
+                tickTimeElapsed = 0.0f;
             }
 
-            ++carMapIt;
+            //Finds cars to delete
+            std::vector<cNetworkCar*> carsToDelete;
+            for (std::map<std::string, cNetworkCar*>::iterator carMapIt = server.networkCars.begin(); carMapIt != server.networkCars.end();)
+            {
+                cNetworkCar* car = (*carMapIt).second;
+                if (!car->Integrate((float)deltaTime))
+                {
+                    carsToDelete.push_back((*carMapIt).second);
+                }
+
+                ++carMapIt;
+            }
+
+            //Deletes cars
+            for (cNetworkCar* car : carsToDelete)
+            {
+                server.RemoveNetworkCar(car);
+            }
         }
-
-        //Deletes cars
-        for (cNetworkCar* car : carsToDelete)
-        {
-            server.RemoveNetworkCar(car);
-        }
-
-        g_FlyCamera->Update(deltaTime);
-
-        server.SendCarState(username, playerCar->Transform().position, playerCar->Velocity(), playerCar->Transform().rotation.y);
-        server.CheckReceive();
     }
 
     delete g_FlyCamera;

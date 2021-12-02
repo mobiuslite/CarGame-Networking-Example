@@ -176,51 +176,96 @@ int main()
         {
             previous_update_time = current_time;
 
-            for (ClientInfo* client : ClientArray)
+            if (!gameStarted && ClientArray.size() > 0)
             {
-                sockaddr_in clientAddress;
-
-                clientAddress.sin_family = AF_INET;
-                clientAddress.sin_port = client->port;
-                clientAddress.sin_addr.s_addr = inet_addr(client->ip.c_str());
-
-                bufferProtos::CarStateArray carArray;
-
-                for (ClientInfo* clientToSend : ClientArray)
+                bool everyoneReady = true;
+                for (ClientInfo* client : ClientArray)
                 {
-                    //Don't send the current client their own info (cause why would you do that????)
-                    if (client->username != clientToSend->username && clientToSend->carState.username() != "")
+                    if (!client->isReady)
                     {
-                        //Adds car to car array
-                        bufferProtos::CarStateArray_CarState* addedCar = carArray.add_cararray();
-                        *addedCar = clientToSend->carState;
+                        everyoneReady = false;
+                        break;
                     }
                 }
-                //   Send!
-                buffer.ClearBuffer();
 
-                //Serialize car array
-                std::string messageToSend;
-                carArray.SerializeToString(&messageToSend);
-
-                buffer.WriteShort((short)0);
-                buffer.WriteShort((short)messageToSend.size());
-                buffer.WriteString(messageToSend);
-                std::string bufferMsg = buffer.GetBufferMessage();
-
-                int BufLen = (int)bufferMsg.size();
-
-                //Send car array
-                int result = sendto(listenSocket,
-                    bufferMsg.c_str(), BufLen, 0, (SOCKADDR*)&clientAddress, sizeof(clientAddress));
-                if (result == SOCKET_ERROR)
+                if (everyoneReady)
                 {
-                    wprintf(L"sendto failed with error: %d\n", WSAGetLastError());
-                    closesocket(listenSocket);
-                    WSACleanup();
+                    gameStarted = true;
+
+                    for (ClientInfo* client : ClientArray)
+                    {
+                        sockaddr_in clientAddress;
+
+                        clientAddress.sin_family = AF_INET;
+                        clientAddress.sin_port = client->port;
+                        clientAddress.sin_addr.s_addr = inet_addr(client->ip.c_str());
+
+                        //Send a message to everyone to start
+                        buffer.WriteShort((short)1);
+                        std::string bufferMsg = buffer.GetBufferMessage();
+
+                        int BufLen = (int)bufferMsg.size();
+
+                        //Send car array
+                        int result = sendto(listenSocket,
+                            bufferMsg.c_str(), BufLen, 0, (SOCKADDR*)&clientAddress, sizeof(clientAddress));
+                        if (result == SOCKET_ERROR)
+                        {
+                            wprintf(L"sendto failed with error: %d\n", WSAGetLastError());
+                            closesocket(listenSocket);
+                            WSACleanup();
+                        }
+                    }
                 }
             }
 
+            //Send clients info about other clients
+            if (ClientArray.size() > 1) {
+                for (ClientInfo* client : ClientArray)
+                {
+                    sockaddr_in clientAddress;
+
+                    clientAddress.sin_family = AF_INET;
+                    clientAddress.sin_port = client->port;
+                    clientAddress.sin_addr.s_addr = inet_addr(client->ip.c_str());
+
+                    bufferProtos::CarStateArray carArray;
+
+                    for (ClientInfo* clientToSend : ClientArray)
+                    {
+                        //Don't send the current client their own info (cause why would you do that????)
+                        if (client->username != clientToSend->username && clientToSend->carState.username() != "")
+                        {
+                            //Adds car to car array
+                            bufferProtos::CarStateArray_CarState* addedCar = carArray.add_cararray();
+                            *addedCar = clientToSend->carState;
+                        }
+                    }
+                    //   Send!
+                    buffer.ClearBuffer();
+
+                    //Serialize car array
+                    std::string messageToSend;
+                    carArray.SerializeToString(&messageToSend);
+
+                    buffer.WriteShort((short)0);
+                    buffer.WriteShort((short)messageToSend.size());
+                    buffer.WriteString(messageToSend);
+                    std::string bufferMsg = buffer.GetBufferMessage();
+
+                    int BufLen = (int)bufferMsg.size();
+
+                    //Send car array
+                    int result = sendto(listenSocket,
+                        bufferMsg.c_str(), BufLen, 0, (SOCKADDR*)&clientAddress, sizeof(clientAddress));
+                    if (result == SOCKET_ERROR)
+                    {
+                        wprintf(L"sendto failed with error: %d\n", WSAGetLastError());
+                        closesocket(listenSocket);
+                        WSACleanup();
+                    }
+                }
+            }
             //Sets the car states username to empty
             //Unless the client sends something again, it will not be sent to the client
             //Without this, the server would constantly send a car states position even if they were dissconnected.
@@ -284,7 +329,6 @@ int main()
                 if (foundClientIt == ClientArray.end() && !gameStarted)
                 {
                     //Creates new client
-
                     printf("Added new client!\n");
 
                     ClientInfo* newClient = new ClientInfo();
@@ -299,7 +343,7 @@ int main()
                     UpdateScreen();
                 }
                 //Found the client!
-                else
+                else if (foundClientIt != ClientArray.end())
                 {
                     currentClient = *foundClientIt;
                 }
@@ -339,9 +383,64 @@ int main()
                     currentClient->isReady = !currentClient->isReady;
                     UpdateScreen();
                 }
+                else if (messageType == 100)
+                {
+                    buffer.ClearBuffer();
+                    buffer.WriteShort((short)100);
+                    std::string bufferMsg = buffer.GetBufferMessage();
+
+                    int BufLen = (int)bufferMsg.size();
+
+                    sockaddr_in clientAddress;
+
+                    clientAddress.sin_family = AF_INET;
+                    clientAddress.sin_port = currentClient->port;
+                    clientAddress.sin_addr.s_addr = inet_addr(currentClient->ip.c_str());
+                    //Send car array
+                    int result = sendto(listenSocket,
+                        bufferMsg.c_str(), BufLen, 0, (SOCKADDR*)&clientAddress, sizeof(clientAddress));
+                    if (result == SOCKET_ERROR)
+                    {
+                        wprintf(L"sendto failed with error: %d\n", WSAGetLastError());
+                        closesocket(listenSocket);
+                        WSACleanup();
+                    }
+                }
             }
         }
     }
+
+    //Deletes all client info and sends them a msg saying the server is shutting down
+    for (ClientInfo* info : ClientArray)
+    {
+        //Sends to each client that the server is shutting down
+        sockaddr_in clientAddress;
+
+        clientAddress.sin_family = AF_INET;
+        clientAddress.sin_port = info->port;
+        clientAddress.sin_addr.s_addr = inet_addr(info->ip.c_str());
+
+        buffer.ClearBuffer();
+        //Send a message to everyone to start
+        buffer.WriteShort((short)-1);
+        std::string bufferMsg = buffer.GetBufferMessage();
+
+        int BufLen = (int)bufferMsg.size();
+
+        //Send car array
+        int result = sendto(listenSocket,
+            bufferMsg.c_str(), BufLen, 0, (SOCKADDR*)&clientAddress, sizeof(clientAddress));
+        if (result == SOCKET_ERROR)
+        {
+            wprintf(L"sendto failed with error: %d\n", WSAGetLastError());
+            closesocket(listenSocket);
+            WSACleanup();
+        }
+
+        //Delete client info
+        delete info;
+    }
+    printf("Deleted all client info..\n\n");
 
     printf("Shutting down server!...\n\n");
     //-----------------------------------------------
@@ -366,13 +465,6 @@ int main()
     wprintf(L"Cleaned up WSA.\n");
     WSACleanup();
 
-    //Deletes all client info
-    for (ClientInfo* info : ClientArray)
-    {
-        delete info;
-    }
-
-    printf("Deleted all client info..\n\n");
     printf("Goodnight!");
 
     return 0;
