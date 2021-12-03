@@ -26,6 +26,7 @@ struct ClientInfo
 	std::chrono::system_clock::time_point endTime;
 
 	bufferProtos::CarStateArray_CarState carState;
+	std::vector<bufferProtos::CarStateArray_CarState> recordingData;
 };
 
 struct ClientFinder

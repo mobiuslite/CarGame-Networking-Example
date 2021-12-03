@@ -24,12 +24,18 @@
     <ClCompile Include="..\sharedinclude\gen\cc\CarStateArray.pb.cc">
       <Filter>Proto CCs</Filter>
     </ClCompile>
+    <ClCompile Include="cReplayData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ClientInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Car.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cReplayData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

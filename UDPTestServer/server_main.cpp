@@ -15,6 +15,7 @@
 #include <chrono>
 
 #include <BufferLibrary/cBuffer.h>
+#include "cReplayData.h"
 
 #define PORT 27015
 
@@ -23,6 +24,8 @@
 
 std::vector<ClientInfo*> ClientArray;
 cBuffer buffer = cBuffer(512);
+
+cReplayData replay;
 
 bool gameStarted = false;
 
@@ -112,6 +115,7 @@ int main()
 
     //24hz (roughly)
     std::chrono::milliseconds tickTime = std::chrono::milliseconds(41);
+    replay.SetTickTime(41);
 
     while (true)
     {
@@ -126,26 +130,31 @@ int main()
             {
                 tickTime = std::chrono::milliseconds(1000);
                 printf("Set server to 1hz\n");
+                replay.SetTickTime(1000);
             }
             else if (charHit == '2')
             {
                 tickTime = std::chrono::milliseconds(100);
                 printf("Set server to 10hz\n");
+                replay.SetTickTime(100);
             }
             else if (charHit == '3')
             {
                 tickTime = std::chrono::milliseconds(10);
                 printf("Set server to 100hz\n");
+                replay.SetTickTime(10);
             }
             else if (charHit == '4')
             {
                 tickTime = std::chrono::milliseconds(16);
                 printf("Set server to 60hz\n");
+                replay.SetTickTime(16);
             }
             else if (charHit == '5')
             {
                 tickTime = std::chrono::milliseconds(41);
                 printf("Set server to 24hz\n");
+                replay.SetTickTime(41);
             }
         }
 
@@ -175,6 +184,7 @@ int main()
         if (current_time >= previous_update_time + tickTime)
         {
             previous_update_time = current_time;
+            replay.Integrate();
 
             //If the game is running, check to see if everyone is finished.
             if (gameStarted && ClientArray.size() > 0)
@@ -203,16 +213,24 @@ int main()
                         {
                             fastedClient = client;
                             fastedTime = lapTimeSeconds;
-                        }
+                        }        
                     }
 
                     fastedClient->score++;
+                    replay.SetFastedRecording(fastedClient->recordingData, fastedTime);
+
+                    for (ClientInfo* client : ClientArray)
+                    {   
+                        //Clears recording data if they aren't the fastest.
+                        client->recordingData.clear();
+                    }
 
                     gameStarted = false;
                     UpdateScreen();
                 }
             }
 
+            //Check to see if everyone is ready
             if (!gameStarted && ClientArray.size() > 0)
             {
                 bool everyoneReady = true;
@@ -258,37 +276,48 @@ int main()
                             WSACleanup();
                         }
                     }
+
+                    replay.StartReplaying();
                 }
             }
 
             //Send clients info about other clients
-            if (ClientArray.size() > 1) {
-                for (ClientInfo* client : ClientArray)
+
+            for (ClientInfo* client : ClientArray)
+            {
+                sockaddr_in clientAddress;
+
+                clientAddress.sin_family = AF_INET;
+                clientAddress.sin_port = client->port;
+                clientAddress.sin_addr.s_addr = inet_addr(client->ip.c_str());
+
+                bufferProtos::CarStateArray carArray;
+
+                for (ClientInfo* clientToSend : ClientArray)
                 {
-                    sockaddr_in clientAddress;
-
-                    clientAddress.sin_family = AF_INET;
-                    clientAddress.sin_port = client->port;
-                    clientAddress.sin_addr.s_addr = inet_addr(client->ip.c_str());
-
-                    bufferProtos::CarStateArray carArray;
-
-                    for (ClientInfo* clientToSend : ClientArray)
+                    //Don't send the current client their own info (cause why would you do that????)
+                    if (client->username != clientToSend->username && clientToSend->carState.username() != "")
                     {
-                        //Don't send the current client their own info (cause why would you do that????)
-                        if (client->username != clientToSend->username && clientToSend->carState.username() != "")
-                        {
-                            //Adds car to car array
-                            bufferProtos::CarStateArray_CarState* addedCar = carArray.add_cararray();
-                            *addedCar = clientToSend->carState;
-                        }
+                        //Adds car to car array
+                        bufferProtos::CarStateArray_CarState* addedCar = carArray.add_cararray();
+                        *addedCar = clientToSend->carState;
                     }
-                    //   Send!
-                    buffer.ClearBuffer();
+                }
 
-                    //Serialize car array
-                    std::string messageToSend;
-                    carArray.SerializeToString(&messageToSend);
+                //Add replay car
+                if (replay.IsReplaying())
+                {
+                    bufferProtos::CarStateArray_CarState* replayCar = carArray.add_cararray();
+                    *replayCar = replay.GetReplayState();
+                }
+
+                buffer.ClearBuffer();
+
+                //Serialize car array
+                std::string messageToSend;
+                carArray.SerializeToString(&messageToSend);
+
+                if (messageToSend != "") {
 
                     buffer.WriteShort((short)0);
                     buffer.WriteShort((short)messageToSend.size());
@@ -308,6 +337,7 @@ int main()
                     }
                 }
             }
+            
             //Sets the car states username to empty
             //Unless the client sends something again, it will not be sent to the client
             //Without this, the server would constantly send a car states position even if they were dissconnected.
@@ -411,6 +441,14 @@ int main()
 
                     if (success)
                     {
+                        //If the game is playing, and the client hasn't finished yet.
+                        //Add the recording data to their replay.
+                        if (gameStarted && currentClient->isReady)
+                        {
+                            carState.set_username("GHOSTCAR1");
+                            currentClient->recordingData.push_back(carState);
+                        }
+
                         currentClient->carState = carState;
                         currentClient->timeoutElapsed = 0.0f;
                         if (currentClient->username == "")
