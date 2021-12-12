@@ -11,6 +11,9 @@ public:
 
 	virtual bool Integrate(float deltaTime);
 
+	void SetTween(bool state);
+	void SetDeadReck(bool state);
+
 	void SetNetworkCar(glm::vec2 pos, glm::vec2 velo, float yRot);
 
 private:
@@ -24,4 +27,7 @@ private:
 
 	float destroyTime = 10.0f;
 	float destoryElasped = 0.0f;
+
+	bool useDeadReck;
+	bool useTween;
 };

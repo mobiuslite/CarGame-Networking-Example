@@ -33,20 +33,28 @@ void cNetworkCar::SetNetworkCar(glm::vec2 pos, glm::vec2 velo, float yRot)
 bool cNetworkCar::Integrate(float deltaTime)
 {
 	//Pnew = P + dt * v
-	this->p_mesh->positionXYZ = this->p_mesh->positionXYZ + deltaTime * this->m_velocity;
+	
+	if(this->useDeadReck)
+		this->p_mesh->positionXYZ = this->p_mesh->positionXYZ + deltaTime * this->m_velocity;
 
 	this->elaspedTweenTime += deltaTime;
 
 	//Tweens rotation
 	if (yRotationTween != this->p_mesh->orientationXYZ.y && elaspedTweenTime < tweenTime)
 	{
-		this->p_mesh->orientationXYZ.y = lerp(this->p_mesh->orientationXYZ.y, yRotationTween, elaspedTweenTime / tweenTime);
+		if (this->useTween)
+			this->p_mesh->orientationXYZ.y = lerp(this->p_mesh->orientationXYZ.y, yRotationTween, elaspedTweenTime / tweenTime);
+		else
+			this->p_mesh->orientationXYZ.y = yRotationTween;
 	}
 
 	//Tweens position
 	if (positionTween != this->p_mesh->positionXYZ && elaspedTweenTime < tweenTime)
 	{
-		this->p_mesh->positionXYZ = lerp(this->p_mesh->positionXYZ, positionTween, elaspedTweenTime / tweenTime);
+		if (this->useTween)
+			this->p_mesh->positionXYZ = lerp(this->p_mesh->positionXYZ, positionTween, elaspedTweenTime / tweenTime);
+		else
+			this->p_mesh->positionXYZ = positionTween;
 	}
 
 	destoryElasped += deltaTime;
@@ -57,6 +65,15 @@ bool cNetworkCar::Integrate(float deltaTime)
 	}
 
 	return true;
+}
+
+void cNetworkCar::SetTween(bool state)
+{
+	this->useTween = state;
+}
+void cNetworkCar::SetDeadReck(bool state)
+{
+	this->useDeadReck = state;
 }
 
 float lerp(float a, float b, float t)

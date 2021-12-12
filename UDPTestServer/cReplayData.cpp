@@ -52,7 +52,6 @@ void cReplayData::Integrate()
 
 bufferProtos::CarStateArray_CarState cReplayData::GetReplayState()
 {
-	std::cout << "Outputing frame: " << this->currentReplayFrame << std::endl;
 	return this->fastedCarState[currentReplayFrame];
 }
 

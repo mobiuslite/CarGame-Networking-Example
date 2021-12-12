@@ -48,7 +48,7 @@ enum class Transform
 
 GLuint program;
 
-cServer server = cServer("72.39.189.9", 27015);
+cServer server = cServer("72.39.116.94", 27015);
 //cServer server = cServer("192.168.1.186", 27015);
 
 std::string username;
@@ -80,6 +80,9 @@ cMesh* g_DebugSphere = NULL;
 unsigned int g_selectedObject = 0;
 unsigned int g_selectedLight = 0;
 
+bool useTween = true;
+bool useDeadReck = true;
+
 Transform transformType = Transform::Translate;
 
 cSceneLoader* sceneLoader;
@@ -89,6 +92,8 @@ cCar* playerCar;
 
 float tick = 41.0f;
 float tickTimeElapsed = 0.0f;
+
+bool clientSidePrediction = true;
 
 //Method in DrawObjectFunction
 void extern DrawObject(cMesh* curMesh, glm::mat4 matModel, GLint program, cVAOManager* VAOManager, cBasicTextureManager textureManager, std::map<std::string, GLint> uniformLocations);
@@ -133,6 +138,15 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         {
             std::cout << "Saved scene: " << sceneName << std::endl;
         }*/
+    }
+
+    if (key == GLFW_KEY_O && action == GLFW_PRESS)
+    {
+        useTween = !useTween;
+    }
+    else if (key == GLFW_KEY_P && action == GLFW_PRESS)
+    {
+        useDeadReck = !useDeadReck;
     }
 
     if (key == GLFW_KEY_1 && action == GLFW_PRESS)
@@ -650,6 +664,10 @@ int main(void)
             for (std::map<std::string, cNetworkCar*>::iterator carMapIt = server.networkCars.begin(); carMapIt != server.networkCars.end();)
             {
                 cNetworkCar* car = (*carMapIt).second;
+
+                car->SetTween(useTween);
+                car->SetDeadReck(useDeadReck);
+
                 if (!car->Integrate((float)deltaTime))
                 {
                     carsToDelete.push_back((*carMapIt).second);
