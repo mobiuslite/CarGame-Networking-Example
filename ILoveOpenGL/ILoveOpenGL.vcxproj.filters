@@ -205,6 +205,9 @@
     <None Include="assets\shaders\vertShader_01.glsl">
       <Filter>ShaderManager\Shaders</Filter>
     </None>
+    <None Include="..\bin\protos\CarStateArray.proto">
+      <Filter>Proto CCs</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="assets\scenes\project2.xml">

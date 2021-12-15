@@ -202,6 +202,7 @@ int main()
                 if (everyoneFinished)
                 {
                     //Get fastest time
+
                     ClientInfo* fastedClient = nullptr;
                     float fastedTime = std::numeric_limits<float>::max();
 
@@ -396,9 +397,12 @@ int main()
 
                 ClientInfo* currentClient = nullptr;
 
-                //Didn't find the client
-                //Don't let new players join while game is running.
-                if (foundClientIt == ClientArray.end() && !gameStarted)
+                //Found the client!
+                if (foundClientIt != ClientArray.end())
+                {
+                    currentClient = *foundClientIt;
+                }
+                else
                 {
                     //Creates new client
                     printf("Added new client!\n");
@@ -413,11 +417,6 @@ int main()
                     currentClient = ClientArray[ClientArray.size() - 1];
 
                     UpdateScreen();
-                }
-                //Found the client!
-                else if (foundClientIt != ClientArray.end())
-                {
-                    currentClient = *foundClientIt;
                 }
 
                 std::string recvString;

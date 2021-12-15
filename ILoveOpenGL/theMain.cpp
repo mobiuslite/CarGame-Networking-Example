@@ -3,6 +3,8 @@
 //#define GLFW_INCLUDE_NONE
 //#include <GLFW/glfw3.h>
 
+//Project 3 by ethan robertson
+
 #include "GLCommon.h"
 
 //#include "linmath.h"

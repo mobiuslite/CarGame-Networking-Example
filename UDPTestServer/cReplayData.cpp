@@ -10,6 +10,8 @@ void cReplayData::SetFastedRecording(std::vector<bufferProtos::CarStateArray_Car
 		this->fastedLapTime = time;
 		this->numberReplayDataPerSecond = fastedData.size() / time;
 	}
+
+	this->currentReplayFrame = 0;
 }
 void cReplayData::SetTickTime(int tick)
 {
