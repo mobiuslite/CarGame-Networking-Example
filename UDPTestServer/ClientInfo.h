@@ -16,6 +16,7 @@ struct ClientInfo
 	std::string username;
 
 	bool isReady = false;
+	bool timingOut = false;
 
 	float timeoutTime = 4000.0f;
 	float timeoutElapsed = 0.0f;

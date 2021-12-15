@@ -375,7 +375,7 @@ int main()
             {
                 int lastError = WSAGetLastError();
 
-                if (lastError != WSAEWOULDBLOCK)
+                if (lastError != WSAEWOULDBLOCK && lastError != WSAECONNRESET)
                 {
                     wprintf(L"recvfrom failed with error %d\n", lastError);
                 }
@@ -443,10 +443,13 @@ int main()
                     {
                         //If the game is playing, and the client hasn't finished yet.
                         //Add the recording data to their replay.
+                        std::string cachedUsername = carState.username();
+
                         if (gameStarted && currentClient->isReady)
                         {
                             carState.set_username("GHOSTCAR1");
                             currentClient->recordingData.push_back(carState);
+                            carState.set_username(cachedUsername);
                         }
 
                         currentClient->carState = carState;

@@ -278,7 +278,13 @@ void cServer::CheckReceive(float deltaTime)
         {
             int lastError = WSAGetLastError();
 
-            if (lastError != WSAEWOULDBLOCK)
+            if (lastError == WSAECONNRESET)
+            {
+                printf("Server is currently offline!\n");
+                this->connected = false;
+            }
+
+            else if (lastError != WSAEWOULDBLOCK)
             {
                 wprintf(L"recvfrom failed with error %d\n", lastError);
             }

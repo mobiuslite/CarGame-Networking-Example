@@ -48,8 +48,8 @@ enum class Transform
 
 GLuint program;
 
-cServer server = cServer("72.39.116.94", 27015);
-//cServer server = cServer("192.168.1.186", 27015);
+//cServer server = cServer("72.39.116.94", 27015);
+cServer server = cServer("127.0.0.1", 27015);
 
 std::string username;
 

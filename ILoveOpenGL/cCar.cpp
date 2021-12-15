@@ -62,12 +62,29 @@ bool cCar::Integrate(float deltaTime)
 
 	//Vnew = V + dt * a
 	this->m_velocity = this->m_velocity + deltaTime * this->m_acceleration;
-	//Pnew = P + dt * v
-	this->Mesh()->positionXYZ = this->Mesh()->positionXYZ + deltaTime * this->m_velocity;
 
-	//Updates the position of this car's collider
-	this->collider->position = this->Transform().position;
+	if ((this->Mesh()->positionXYZ.x > -80.0f || this->m_velocity.x > 0.0f) && (this->Mesh()->positionXYZ.x < 80.0f || this->m_velocity.x < 0.0f))
+	{
+		if ((this->Mesh()->positionXYZ.z > -60.0f || this->m_velocity.z > 0.0f) && (this->Mesh()->positionXYZ.z < 60.0f || this->m_velocity.z < 0.0f))
+		{
+			//Pnew = P + dt * v
+			this->Mesh()->positionXYZ = this->Mesh()->positionXYZ + deltaTime * this->m_velocity;
 
+			//Updates the position of this car's collider
+			this->collider->position = this->Transform().position;
+
+			//std::cout << this->p_mesh->positionXYZ.x << ", " << this->p_mesh->positionXYZ.z << std::endl;
+		}
+		else
+		{
+			this->m_velocity = glm::vec3(0.0f);
+		}
+	}
+	else
+	{
+		this->m_velocity = glm::vec3(0.0f);
+	}
+	
 	return true;
 }
 

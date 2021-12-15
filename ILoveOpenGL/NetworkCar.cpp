@@ -34,8 +34,16 @@ bool cNetworkCar::Integrate(float deltaTime)
 {
 	//Pnew = P + dt * v
 	
-	if(this->useDeadReck)
-		this->p_mesh->positionXYZ = this->p_mesh->positionXYZ + deltaTime * this->m_velocity;
+	if (this->useDeadReck)
+	{
+		if ((this->Mesh()->positionXYZ.x > -80.0f || this->m_velocity.x > 0.0f) && (this->Mesh()->positionXYZ.x < 80.0f || this->m_velocity.x < 0.0f))
+		{
+			if ((this->Mesh()->positionXYZ.z > -60.0f || this->m_velocity.z > 0.0f) && (this->Mesh()->positionXYZ.z < 60.0f || this->m_velocity.z < 0.0f))
+			{
+				this->p_mesh->positionXYZ = this->p_mesh->positionXYZ + deltaTime * this->m_velocity;
+			}
+		}
+	}
 
 	this->elaspedTweenTime += deltaTime;
 

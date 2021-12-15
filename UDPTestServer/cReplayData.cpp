@@ -57,8 +57,11 @@ bufferProtos::CarStateArray_CarState cReplayData::GetReplayState()
 
 void cReplayData::StartReplaying()
 {
-	if(this->fastedCarState.size() > 0)
+	if (this->fastedCarState.size() > 0)
+	{
 		this->replaying = true;
+		currentReplayFrame = 0;
+	}
 }
 
 bool cReplayData::IsReplaying()
