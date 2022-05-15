@@ -4,7 +4,7 @@ Ethan Robertson Networking Example
 
 # HOW TO RUN: 
 ### Open solution, build in either release or debug x64
-### Run UDpTestServer project.
+### Run UDPTestServer project.
 ### Right click in solution explorer on CarGameCient
 ### Hover over debug, and click start new instance
 ### Do this for how ever many clients you like
