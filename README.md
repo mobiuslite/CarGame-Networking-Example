@@ -1,5 +1,6 @@
 Ethan Robertson Networking Example
 ![Two Clients](https://i.imgur.com/jrfNHyC.png)
+### [Video Showcase](https://www.youtube.com/watch?v=mOypcNv_dRw)
 
 # HOW TO RUN: 
 ### Open solution, build in either release or debug x64

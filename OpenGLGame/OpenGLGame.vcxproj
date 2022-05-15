@@ -22,7 +22,7 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{80afcf61-8852-4204-a0c2-3876b6ea17bf}</ProjectGuid>
-    <RootNamespace>ILoveOpenGL</RootNamespace>
+    <RootNamespace>OpenGLGame</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>CarGameClient</ProjectName>
   </PropertyGroup>
