@@ -1,0 +1,25 @@
+syntax = "proto2";
+
+package bufferProtos;
+
+message CarStateArray{
+
+	message CarState {
+		
+		required string username = 1;
+		
+		message Vector2
+		{
+			required float x = 1;
+			required float z = 2;
+		}
+		
+		required Vector2 position = 2;
+		required Vector2 velocity = 3;
+		
+		required float yRadiansRotation = 4;
+	
+	}
+	
+	repeated CarState carArray = 1;
+}
