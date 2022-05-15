@@ -23,5 +23,3 @@ NOTE:	When creating clients, make sure each client has a unique username, as tha
 
 	If a client is launched and it has a low framerate, restarting the program will fix it. With a low framerate, the 
 	server's info sending will lag behind.
-
-	I have added you to the repo, and included the .git folder in this project
